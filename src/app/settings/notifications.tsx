@@ -4,7 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SettingsHeader } from '@/components/SettingsHeader';
 import { useToast } from '@/components/Toast';
-import { colors, radius, spacing } from '@/constants/theme';
+import { radius, spacing, type ThemeColors } from '@/constants/theme';
+import { useThemeColors, useThemedStyles } from '@/hooks/use-theme';
 import { useApp, type NotificationSettings } from '@/store/app-context';
 
 const ITEMS: { key: keyof NotificationSettings; title: string; desc: string }[] = [
@@ -29,6 +30,8 @@ const ITEMS: { key: keyof NotificationSettings; title: string; desc: string }[] 
 export default function NotificationSettingsScreen() {
   const toast = useToast();
   const { notifications, setNotification } = useApp();
+  const c = useThemeColors();
+  const styles = useThemedStyles(createStyles);
 
   // 알림을 켤 때 OS 알림 권한을 실제로 요청한다 (웹은 미지원)
   const toggle = async (key: keyof NotificationSettings, value: boolean) => {
@@ -55,8 +58,8 @@ export default function NotificationSettingsScreen() {
             <Switch
               value={notifications[item.key]}
               onValueChange={(v) => toggle(item.key, v)}
-              trackColor={{ false: colors.border, true: colors.sageLight }}
-              thumbColor={notifications[item.key] ? colors.sage : '#FFFFFF'}
+              trackColor={{ false: c.border, true: c.sageLight }}
+              thumbColor={notifications[item.key] ? c.sage : '#FFFFFF'}
             />
           </View>
         ))}
@@ -65,36 +68,37 @@ export default function NotificationSettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.beigeBg,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingTop: spacing.sm,
-    gap: 12,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.cardBg,
-    borderRadius: radius.card,
-    padding: spacing.md,
-  },
-  textWrap: {
-    flex: 1,
-    gap: 4,
-  },
-  rowTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.textMain,
-  },
-  rowDesc: {
-    fontSize: 13,
-    lineHeight: 19,
-    color: colors.textSub,
-  },
-});
+const createStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: c.beigeBg,
+    },
+    content: {
+      padding: spacing.lg,
+      paddingTop: spacing.sm,
+      gap: 12,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: c.cardBg,
+      borderRadius: radius.card,
+      padding: spacing.md,
+    },
+    textWrap: {
+      flex: 1,
+      gap: 4,
+    },
+    rowTitle: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: c.textMain,
+    },
+    rowDesc: {
+      fontSize: 13,
+      lineHeight: 19,
+      color: c.textSub,
+    },
+  });

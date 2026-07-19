@@ -1,9 +1,11 @@
 import {
+  CONGESTION_REPORT_TTL_MS,
   SPOTS,
   currentTimeSlot,
   getCurrentCongestion,
   getSpot,
   recommendSpots,
+  resolveCongestion,
 } from '@/data/spots';
 
 const at = (hour: number) => new Date(2026, 6, 19, hour, 0, 0);
@@ -28,6 +30,27 @@ describe('getCurrentCongestion', () => {
     expect(getCurrentCongestion(spot, at(9))).toBe('low'); // 0.2
     expect(getCurrentCongestion(spot, at(14))).toBe('mid'); // 0.45
     expect(getCurrentCongestion(spot, at(20))).toBe('high'); // 0.6 (경계값 포함)
+  });
+});
+
+describe('resolveCongestion', () => {
+  const spot = getSpot('sunset-bench')!; // 오전 0.2 → 데이터 기준 low
+
+  it('유효한 제보가 있으면 제보 값을 우선한다', () => {
+    const now = at(9);
+    const report = { level: 'high' as const, at: now.getTime() - 10 * 60 * 1000 }; // 10분 전
+    expect(resolveCongestion(spot, report, now)).toBe('high');
+  });
+
+  it('유효 시간이 지난 제보는 무시하고 시간대 데이터로 돌아간다', () => {
+    const now = at(9);
+    const report = { level: 'high' as const, at: now.getTime() - CONGESTION_REPORT_TTL_MS - 1 };
+    expect(resolveCongestion(spot, report, now)).toBe('low');
+  });
+
+  it('제보가 없으면 시간대 데이터를 그대로 쓴다', () => {
+    expect(resolveCongestion(spot, undefined, at(9))).toBe('low');
+    expect(resolveCongestion(spot, null, at(20))).toBe('high');
   });
 });
 

@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CongestionBadge } from '@/components/CongestionBadge';
+import { SpotImage } from '@/components/SpotImage';
 import { RatingScore } from '@/components/StarRating';
 import { TagChip } from '@/components/TagChip';
 import { useToast } from '@/components/Toast';
-import { colors, radius, shadow } from '@/constants/theme';
-import { getCurrentCongestion } from '@/data/spots';
+import { radius, shadow, type ThemeColors } from '@/constants/theme';
+import { resolveCongestion } from '@/data/spots';
+import { useThemeColors, useThemedStyles } from '@/hooks/use-theme';
 import { useApp } from '@/store/app-context';
 import type { Spot } from '@/types';
 
@@ -18,17 +19,19 @@ interface SpotCardProps {
 
 // 홈/저장 목록에서 쓰는 스팟 카드 (시안: 이미지 + 혼잡도 배지 + 북마크 + 이름/거리/별점/태그)
 export function SpotCard({ spot, onPress }: SpotCardProps) {
-  const { isBookmarked, toggleBookmark } = useApp();
+  const { isBookmarked, toggleBookmark, congestionReports } = useApp();
   const toast = useToast();
+  const c = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const bookmarked = isBookmarked(spot.id);
 
   return (
     // 웹에서 button 중첩(카드 > 북마크)을 피하기 위해 카드에는 role을 주지 않는다
     <Pressable style={styles.card} onPress={onPress}>
       <View style={styles.imageWrap}>
-        <Image source={{ uri: spot.image }} style={styles.image} contentFit="cover" transition={200} />
+        <SpotImage uri={spot.image} style={styles.image} fallbackIconSize={32} />
         <View style={styles.badgeWrap}>
-          <CongestionBadge level={getCurrentCongestion(spot)} />
+          <CongestionBadge level={resolveCongestion(spot, congestionReports[spot.id])} />
         </View>
         <Pressable
           style={styles.bookmarkBtn}
@@ -56,7 +59,7 @@ export function SpotCard({ spot, onPress }: SpotCardProps) {
           <RatingScore rating={spot.rating} />
         </View>
         <View style={styles.metaRow}>
-          <Ionicons name="navigate-outline" size={13} color={colors.textSub} />
+          <Ionicons name="navigate-outline" size={13} color={c.textSub} />
           <Text style={styles.meta}>
             {spot.walkTime} · {spot.distance}
           </Text>
@@ -71,64 +74,65 @@ export function SpotCard({ spot, onPress }: SpotCardProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.cardBg,
-    borderRadius: radius.card,
-    overflow: 'hidden',
-    ...shadow.card,
-  },
-  imageWrap: {
-    height: 190,
-    backgroundColor: colors.sageSoft,
-  },
-  image: {
-    flex: 1,
-  },
-  badgeWrap: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-  },
-  bookmarkBtn: {
-    position: 'absolute',
-    bottom: 12,
-    right: 12,
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  body: {
-    padding: 16,
-    gap: 8,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  name: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textMain,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  meta: {
-    fontSize: 13,
-    color: colors.textSub,
-  },
-  tagRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 2,
-  },
-});
+const createStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: c.cardBg,
+      borderRadius: radius.card,
+      overflow: 'hidden',
+      ...shadow.card,
+    },
+    imageWrap: {
+      height: 190,
+      backgroundColor: c.sageSoft,
+    },
+    image: {
+      flex: 1,
+    },
+    badgeWrap: {
+      position: 'absolute',
+      top: 12,
+      right: 12,
+    },
+    bookmarkBtn: {
+      position: 'absolute',
+      bottom: 12,
+      right: 12,
+      width: 36,
+      height: 36,
+      borderRadius: 12,
+      backgroundColor: 'rgba(0,0,0,0.35)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    body: {
+      padding: 16,
+      gap: 8,
+    },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+    },
+    name: {
+      flex: 1,
+      fontSize: 18,
+      fontWeight: '700',
+      color: c.textMain,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    meta: {
+      fontSize: 13,
+      color: c.textSub,
+    },
+    tagRow: {
+      flexDirection: 'row',
+      gap: 8,
+      marginTop: 2,
+    },
+  });

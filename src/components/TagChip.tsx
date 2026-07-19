@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { colors, radius } from '@/constants/theme';
+import { radius, type ThemeColors } from '@/constants/theme';
+import { useThemedStyles } from '@/hooks/use-theme';
 
 interface TagChipProps {
   label: string;
@@ -10,12 +11,11 @@ interface TagChipProps {
   small?: boolean;
 }
 
-// 태그 칩: 선택 시 sage 배경 + 흰 글씨, 미선택 시 흰 배경 + 회색 글씨
+// 태그 칩: 선택 시 sage 배경 + 흰 글씨, 미선택 시 카드 배경 + 회색 글씨
 export function TagChip({ label, selected = false, onPress, small = false }: TagChipProps) {
+  const styles = useThemedStyles(createStyles);
   if (small) {
-    return (
-      <Text style={styles.smallChip}>#{label}</Text>
-    );
+    return <Text style={styles.smallChip}>#{label}</Text>;
   }
   return (
     <Pressable
@@ -30,38 +30,39 @@ export function TagChip({ label, selected = false, onPress, small = false }: Tag
   );
 }
 
-const styles = StyleSheet.create({
-  chip: {
-    borderRadius: radius.chip,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-  },
-  chipSelected: {
-    backgroundColor: colors.sage,
-  },
-  chipUnselected: {
-    backgroundColor: colors.cardBg,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  labelSelected: {
-    color: '#FFFFFF',
-  },
-  labelUnselected: {
-    color: colors.textSub,
-  },
-  smallChip: {
-    backgroundColor: colors.sageSoft,
-    color: colors.sage,
-    borderRadius: radius.chip,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    fontSize: 12,
-    fontWeight: '600',
-    overflow: 'hidden',
-  },
-});
+const createStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    chip: {
+      borderRadius: radius.chip,
+      paddingHorizontal: 18,
+      paddingVertical: 10,
+    },
+    chipSelected: {
+      backgroundColor: c.sage,
+    },
+    chipUnselected: {
+      backgroundColor: c.cardBg,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    label: {
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    labelSelected: {
+      color: '#FFFFFF',
+    },
+    labelUnselected: {
+      color: c.textSub,
+    },
+    smallChip: {
+      backgroundColor: c.sageSoft,
+      color: c.sage,
+      borderRadius: radius.chip,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      fontSize: 12,
+      fontWeight: '600',
+      overflow: 'hidden',
+    },
+  });

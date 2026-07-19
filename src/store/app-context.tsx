@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 
-import type { Review } from '@/types';
+import type { CongestionLevel, CongestionReport, Review, ThemeSetting } from '@/types';
 
 const STORAGE_KEY = 'soom:state:v1';
 
@@ -33,6 +33,9 @@ export interface NotificationSettings {
   marketing: boolean;
 }
 
+// 후기 식별 키 (spotId + reviewId)
+const reviewKey = (spotId: string, reviewId: string) => `${spotId}:${reviewId}`;
+
 // AsyncStorage에 통째로 저장되는 부분
 interface PersistedState {
   onboarded: boolean;
@@ -43,6 +46,10 @@ interface PersistedState {
   notifications: NotificationSettings;
   searchHistory: string[];
   locationOverride: string | null; // 사용자가 직접 고른 동네 (null이면 GPS)
+  reviewLikes: string[]; // 내가 '도움돼요' 누른 후기 키
+  reportedReviews: string[]; // 내가 신고한 후기 키 (목록에서 숨김)
+  congestionReports: Record<string, CongestionReport>; // spotId -> 내 혼잡도 제보
+  theme: ThemeSetting;
 }
 
 const INITIAL: PersistedState = {
@@ -54,6 +61,10 @@ const INITIAL: PersistedState = {
   notifications: { spotRecommend: true, comment: true, marketing: false },
   searchHistory: [],
   locationOverride: null,
+  reviewLikes: [],
+  reportedReviews: [],
+  congestionReports: {},
+  theme: 'system',
 };
 
 interface AppState extends PersistedState {
@@ -63,6 +74,11 @@ interface AppState extends PersistedState {
   addReview: (spotId: string, review: Review) => void;
   updateReview: (spotId: string, reviewId: string, patch: Partial<Review>) => void;
   deleteReview: (spotId: string, reviewId: string) => void;
+  isReviewLiked: (spotId: string, reviewId: string) => boolean;
+  toggleReviewLike: (spotId: string, reviewId: string) => void;
+  isReviewReported: (spotId: string, reviewId: string) => boolean;
+  reportReview: (spotId: string, reviewId: string) => void;
+  reportCongestion: (spotId: string, level: CongestionLevel) => void;
   addSearchTerm: (term: string) => void;
   clearSearchHistory: () => void;
   setLocationOverride: (label: string | null) => void;
@@ -75,6 +91,7 @@ interface AppState extends PersistedState {
   deleteList: (listId: string) => void;
   toggleSpotInList: (listId: string, spotId: string) => void;
   setNotification: (key: keyof NotificationSettings, value: boolean) => void;
+  setTheme: (theme: ThemeSetting) => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -141,6 +158,53 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  const deleteReview = useCallback((spotId: string, reviewId: string) => {
+    setState((s) => ({
+      ...s,
+      myReviews: {
+        ...s.myReviews,
+        [spotId]: (s.myReviews[spotId] ?? []).filter((r) => r.id !== reviewId),
+      },
+    }));
+  }, []);
+
+  const isReviewLiked = useCallback(
+    (spotId: string, reviewId: string) => state.reviewLikes.includes(reviewKey(spotId, reviewId)),
+    [state.reviewLikes],
+  );
+
+  const toggleReviewLike = useCallback((spotId: string, reviewId: string) => {
+    const key = reviewKey(spotId, reviewId);
+    setState((s) => ({
+      ...s,
+      reviewLikes: s.reviewLikes.includes(key)
+        ? s.reviewLikes.filter((k) => k !== key)
+        : [...s.reviewLikes, key],
+    }));
+  }, []);
+
+  const isReviewReported = useCallback(
+    (spotId: string, reviewId: string) =>
+      state.reportedReviews.includes(reviewKey(spotId, reviewId)),
+    [state.reportedReviews],
+  );
+
+  const reportReview = useCallback((spotId: string, reviewId: string) => {
+    const key = reviewKey(spotId, reviewId);
+    setState((s) =>
+      s.reportedReviews.includes(key)
+        ? s
+        : { ...s, reportedReviews: [...s.reportedReviews, key] },
+    );
+  }, []);
+
+  const reportCongestion = useCallback((spotId: string, level: CongestionLevel) => {
+    setState((s) => ({
+      ...s,
+      congestionReports: { ...s.congestionReports, [spotId]: { level, at: Date.now() } },
+    }));
+  }, []);
+
   const addSearchTerm = useCallback((term: string) => {
     const t = term.trim();
     if (!t) return;
@@ -156,16 +220,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setLocationOverride = useCallback((label: string | null) => {
     setState((s) => ({ ...s, locationOverride: label }));
-  }, []);
-
-  const deleteReview = useCallback((spotId: string, reviewId: string) => {
-    setState((s) => ({
-      ...s,
-      myReviews: {
-        ...s.myReviews,
-        [spotId]: (s.myReviews[spotId] ?? []).filter((r) => r.id !== reviewId),
-      },
-    }));
   }, []);
 
   const completeOnboarding = useCallback(() => {
@@ -184,9 +238,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setState((s) => ({ ...s, user: null }));
   }, []);
 
-  // 탈퇴: 온보딩 여부만 남기고 모든 데이터 삭제
+  // 탈퇴: 온보딩 여부·화면 테마만 남기고 모든 데이터 삭제
   const deleteAccount = useCallback(() => {
-    setState({ ...INITIAL, onboarded: true });
+    setState((s) => ({ ...INITIAL, onboarded: true, theme: s.theme }));
   }, []);
 
   const createList = useCallback((name: string) => {
@@ -223,6 +277,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setState((s) => ({ ...s, notifications: { ...s.notifications, [key]: value } }));
   }, []);
 
+  const setTheme = useCallback((theme: ThemeSetting) => {
+    setState((s) => ({ ...s, theme }));
+  }, []);
+
   const value = useMemo(
     () => ({
       ...state,
@@ -232,6 +290,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addReview,
       updateReview,
       deleteReview,
+      isReviewLiked,
+      toggleReviewLike,
+      isReviewReported,
+      reportReview,
+      reportCongestion,
       addSearchTerm,
       clearSearchHistory,
       setLocationOverride,
@@ -244,6 +307,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       deleteList,
       toggleSpotInList,
       setNotification,
+      setTheme,
     }),
     [
       state,
@@ -253,6 +317,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addReview,
       updateReview,
       deleteReview,
+      isReviewLiked,
+      toggleReviewLike,
+      isReviewReported,
+      reportReview,
+      reportCongestion,
       addSearchTerm,
       clearSearchHistory,
       setLocationOverride,
@@ -265,6 +334,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       deleteList,
       toggleSpotInList,
       setNotification,
+      setTheme,
     ],
   );
 

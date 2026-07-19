@@ -1,4 +1,4 @@
-import type { CongestionLevel, Spot, TimeSlot } from '@/types';
+import type { CongestionLevel, CongestionReport, Spot, TimeSlot } from '@/types';
 
 // 분위기 태그 (기획서 핵심 기능 3)
 export const MOOD_TAGS = ['조용함', '야경', '산책', '혼자 가기 좋음', '힐링'] as const;
@@ -30,6 +30,8 @@ export const SPOTS: Spot[] = [
         rating: 5,
         text: '해질녘에 맞춰서 갔는데 정말 이름 그대로 노을 맛집이네요. 생각보다 사람이 많지 않아서 조용히 명상하기 좋았어요.',
         photos: [img('photo-1507525428034-b723cf961d3e')],
+        tags: ['조용함', '야경'],
+        likes: 12,
       },
       {
         id: 'r2',
@@ -39,6 +41,8 @@ export const SPOTS: Spot[] = [
         rating: 4,
         text: '주말 저녁에는 조금 붐비지만 야경이 정말 예뻐요. 산책로가 잘 되어 있어서 연인과 오기 딱 좋습니다.',
         photos: [],
+        tags: ['야경', '산책'],
+        likes: 5,
       },
       {
         id: 'r3',
@@ -48,6 +52,8 @@ export const SPOTS: Spot[] = [
         rating: 5,
         text: '퇴근길에 잠깐 들렀는데 30분이 금방 지나갔어요. 바람 소리랑 물소리만 들려서 마음이 편해집니다.',
         photos: [],
+        tags: ['힐링'],
+        likes: 8,
       },
     ],
   },
@@ -74,6 +80,8 @@ export const SPOTS: Spot[] = [
         rating: 5,
         text: '평일 오전에 가면 거의 전세 낸 기분이에요. 책 고르다 보면 스트레스가 녹아요.',
         photos: [img('photo-1481627834876-b7833e8f5570')],
+        tags: ['조용함', '혼자 가기 좋음'],
+        likes: 9,
       },
       {
         id: 'r2',
@@ -109,6 +117,8 @@ export const SPOTS: Spot[] = [
         rating: 5,
         text: '물멍하기 최고의 장소. 이어폰 끼고 한 시간 앉아 있다 왔어요.',
         photos: [],
+        tags: ['혼자 가기 좋음', '힐링'],
+        likes: 15,
       },
       {
         id: 'r2',
@@ -118,6 +128,8 @@ export const SPOTS: Spot[] = [
         rating: 5,
         text: '야경이 진짜 예쁩니다. 사람들이 잘 모르는 구간이라 조용해요.',
         photos: [img('photo-1477959858617-67f85cf4f1df')],
+        tags: ['야경', '조용함'],
+        likes: 7,
       },
     ],
   },
@@ -179,6 +191,8 @@ export const SPOTS: Spot[] = [
         rating: 5,
         text: '출근 전에 한 바퀴 걷고 가면 하루가 달라져요.',
         photos: [img('photo-1441974231531-c6227db76b6e')],
+        tags: ['산책', '힐링'],
+        likes: 11,
       },
     ],
   },
@@ -229,6 +243,19 @@ export function getCurrentCongestion(spot: Spot, date = new Date()): CongestionL
   if (v < 0.4) return 'low';
   if (v < 0.6) return 'mid';
   return 'high';
+}
+
+// 사용자 혼잡도 제보의 유효 시간
+export const CONGESTION_REPORT_TTL_MS = 2 * 60 * 60 * 1000;
+
+// 유효한 제보가 있으면 제보를, 없으면 시간대 데이터를 현재 혼잡도로 쓴다
+export function resolveCongestion(
+  spot: Spot,
+  report?: CongestionReport | null,
+  date = new Date(),
+): CongestionLevel {
+  if (report && date.getTime() - report.at < CONGESTION_REPORT_TTL_MS) return report.level;
+  return getCurrentCongestion(spot, date);
 }
 
 // 맞춤 추천: 북마크·내 후기가 달린 스팟의 태그와 겹치는 정도로 점수화

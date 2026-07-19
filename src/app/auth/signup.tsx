@@ -14,7 +14,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useToast } from '@/components/Toast';
-import { colors, radius, shadow, spacing } from '@/constants/theme';
+import { radius, shadow, spacing, type ThemeColors } from '@/constants/theme';
+import { useThemeColors, useThemedStyles } from '@/hooks/use-theme';
 import { useApp } from '@/store/app-context';
 
 // SOOM_AUTH_002 — 회원가입 (데모: 서버 없이 형식 검증만)
@@ -22,6 +23,8 @@ export default function SignupScreen() {
   const router = useRouter();
   const toast = useToast();
   const { login } = useApp();
+  const c = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -50,7 +53,7 @@ export default function SignupScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} hitSlop={8}>
-            <Ionicons name="chevron-back" size={24} color={colors.textMain} />
+            <Ionicons name="chevron-back" size={24} color={c.textMain} />
           </Pressable>
           <Text style={styles.headerTitle}>회원가입</Text>
           <View style={{ width: 24 }} />
@@ -62,21 +65,21 @@ export default function SignupScreen() {
 
           <View style={styles.form}>
             <View style={styles.inputWrap}>
-              <Ionicons name="person-outline" size={18} color={colors.textSub} />
+              <Ionicons name="person-outline" size={18} color={c.textSub} />
               <TextInput
                 style={styles.input}
                 placeholder="닉네임"
-                placeholderTextColor={colors.textSub}
+                placeholderTextColor={c.textSub}
                 value={name}
                 onChangeText={setName}
               />
             </View>
             <View style={styles.inputWrap}>
-              <Ionicons name="mail-outline" size={18} color={colors.textSub} />
+              <Ionicons name="mail-outline" size={18} color={c.textSub} />
               <TextInput
                 style={styles.input}
                 placeholder="이메일"
-                placeholderTextColor={colors.textSub}
+                placeholderTextColor={c.textSub}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -84,11 +87,11 @@ export default function SignupScreen() {
               />
             </View>
             <View style={styles.inputWrap}>
-              <Ionicons name="lock-closed-outline" size={18} color={colors.textSub} />
+              <Ionicons name="lock-closed-outline" size={18} color={c.textSub} />
               <TextInput
                 style={styles.input}
                 placeholder="비밀번호 (4자 이상)"
-                placeholderTextColor={colors.textSub}
+                placeholderTextColor={c.textSub}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -107,75 +110,76 @@ export default function SignupScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.beigeBg,
-  },
-  flex: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.textMain,
-  },
-  content: {
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '800',
-    lineHeight: 36,
-    color: colors.textMain,
-  },
-  subtitle: {
-    fontSize: 14,
-    lineHeight: 21,
-    color: colors.textSub,
-  },
-  form: {
-    gap: 12,
-    marginTop: spacing.md,
-  },
-  inputWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: colors.cardBg,
-    borderRadius: radius.input,
-    paddingHorizontal: 18,
-    height: 54,
-    ...shadow.card,
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: colors.textMain,
-    paddingVertical: 0,
-  },
-  submitBtn: {
-    backgroundColor: colors.sage,
-    borderRadius: radius.input,
-    height: 54,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
-  submitBtnDisabled: {
-    opacity: 0.5,
-  },
-  submitText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
-  },
-});
+const createStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: c.beigeBg,
+    },
+    flex: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: '800',
+      color: c.textMain,
+    },
+    content: {
+      padding: spacing.lg,
+      gap: spacing.md,
+    },
+    title: {
+      fontSize: 26,
+      fontWeight: '800',
+      lineHeight: 36,
+      color: c.textMain,
+    },
+    subtitle: {
+      fontSize: 14,
+      lineHeight: 21,
+      color: c.textSub,
+    },
+    form: {
+      gap: 12,
+      marginTop: spacing.md,
+    },
+    inputWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      backgroundColor: c.cardBg,
+      borderRadius: radius.input,
+      paddingHorizontal: 18,
+      height: 54,
+      ...shadow.card,
+    },
+    input: {
+      flex: 1,
+      fontSize: 15,
+      color: c.textMain,
+      paddingVertical: 0,
+    },
+    submitBtn: {
+      backgroundColor: c.sage,
+      borderRadius: radius.input,
+      height: 54,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 8,
+    },
+    submitBtnDisabled: {
+      opacity: 0.5,
+    },
+    submitText: {
+      color: '#FFFFFF',
+      fontSize: 16,
+      fontWeight: '800',
+    },
+  });

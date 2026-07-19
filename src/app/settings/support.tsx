@@ -3,7 +3,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SettingsHeader } from '@/components/SettingsHeader';
-import { colors, radius, spacing } from '@/constants/theme';
+import { radius, spacing, type ThemeColors } from '@/constants/theme';
+import { useThemeColors, useThemedStyles } from '@/hooks/use-theme';
 
 const FAQS = [
   {
@@ -12,22 +13,28 @@ const FAQS = [
   },
   {
     q: '혼잡도 정보는 어떻게 만들어지나요?',
-    a: '방문자 후기와 시간대별 데이터를 기반으로 계산돼요. 실시간 연동은 준비 중이에요.',
+    a: '시간대별 데이터에 방문자들의 실시간 제보를 더해 계산돼요. 장소 상세의 "지금 이곳은 어때요?"에서 직접 제보할 수 있어요.',
   },
   {
     q: '내 후기를 수정하거나 삭제할 수 있나요?',
     a: '마이페이지 > 내가 작성한 후기 > 전체보기에서 수정과 삭제 모두 할 수 있어요.',
   },
+  {
+    q: '불쾌한 후기를 발견했어요.',
+    a: '후기 오른쪽 아래의 신고 버튼을 눌러 주세요. 신고한 후기는 바로 숨겨지고, 검토 후 조치돼요.',
+  },
 ];
 
 // 고객 센터 — FAQ 및 문의 안내
 export default function SupportScreen() {
+  const c = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <SettingsHeader title="고객 센터" />
       <View style={styles.content}>
         <View style={styles.contactCard}>
-          <Ionicons name="chatbubble-ellipses-outline" size={22} color={colors.sage} />
+          <Ionicons name="chatbubble-ellipses-outline" size={22} color={c.sage} />
           <View style={styles.contactBody}>
             <Text style={styles.contactTitle}>무엇이든 물어보세요</Text>
             <Text style={styles.contactDesc}>support@soom.app · 평일 10:00 ~ 18:00</Text>
@@ -46,56 +53,57 @@ export default function SupportScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.beigeBg,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingTop: spacing.sm,
-    gap: 12,
-  },
-  contactCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.sageSoft,
-    borderRadius: radius.card,
-    padding: spacing.md,
-  },
-  contactBody: {
-    gap: 3,
-  },
-  contactTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: colors.textMain,
-  },
-  contactDesc: {
-    fontSize: 13,
-    color: colors.textSub,
-  },
-  faqLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.sage,
-    marginTop: spacing.sm,
-  },
-  faqCard: {
-    backgroundColor: colors.cardBg,
-    borderRadius: radius.card,
-    padding: spacing.md,
-    gap: 6,
-  },
-  faqQ: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textMain,
-  },
-  faqA: {
-    fontSize: 13,
-    lineHeight: 20,
-    color: colors.textSub,
-  },
-});
+const createStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: c.beigeBg,
+    },
+    content: {
+      padding: spacing.lg,
+      paddingTop: spacing.sm,
+      gap: 12,
+    },
+    contactCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: c.sageSoft,
+      borderRadius: radius.card,
+      padding: spacing.md,
+    },
+    contactBody: {
+      gap: 3,
+    },
+    contactTitle: {
+      fontSize: 15,
+      fontWeight: '800',
+      color: c.textMain,
+    },
+    contactDesc: {
+      fontSize: 13,
+      color: c.textSub,
+    },
+    faqLabel: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: c.sage,
+      marginTop: spacing.sm,
+    },
+    faqCard: {
+      backgroundColor: c.cardBg,
+      borderRadius: radius.card,
+      padding: spacing.md,
+      gap: 6,
+    },
+    faqQ: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: c.textMain,
+    },
+    faqA: {
+      fontSize: 13,
+      lineHeight: 20,
+      color: c.textSub,
+    },
+  });

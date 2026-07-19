@@ -14,12 +14,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { RatingScore } from '@/components/StarRating';
 import { SpotCard } from '@/components/SpotCard';
+import { SpotImage } from '@/components/SpotImage';
+import { RatingScore } from '@/components/StarRating';
 import { TagChip } from '@/components/TagChip';
-import { colors, radius, shadow, spacing } from '@/constants/theme';
+import { radius, shadow, spacing, type ThemeColors } from '@/constants/theme';
 import { MOOD_TAGS, SPOTS, recommendSpots } from '@/data/spots';
 import { useLocationLabel } from '@/hooks/use-location';
+import { useThemeColors, useThemedStyles } from '@/hooks/use-theme';
 import { useApp } from '@/store/app-context';
 
 // 위치 직접 선택용 프리셋 동네
@@ -36,6 +38,8 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user, bookmarks, myReviews, locationOverride, setLocationOverride } = useApp();
   const { label: gpsLabel, refresh: refreshLocation } = useLocationLabel();
+  const c = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
@@ -69,9 +73,9 @@ export default function HomeScreen() {
         <Pressable onPress={() => setLocationPickerOpen(true)} accessibilityRole="button">
           <Text style={styles.locationLabel}>현재 위치</Text>
           <View style={styles.locationRow}>
-            <Ionicons name="location-sharp" size={16} color={colors.sage} />
+            <Ionicons name="location-sharp" size={16} color={c.sage} />
             <Text style={styles.locationText}>{locationLabel}</Text>
-            <Ionicons name="chevron-down" size={16} color={colors.textSub} />
+            <Ionicons name="chevron-down" size={16} color={c.textSub} />
           </View>
         </Pressable>
         <Pressable onPress={() => router.push('/my')}>
@@ -85,7 +89,7 @@ export default function HomeScreen() {
         onPress={() => router.push('/search')}
         accessibilityRole="button"
         accessibilityLabel="검색 화면 열기">
-        <Ionicons name="search" size={18} color={colors.textSub} />
+        <Ionicons name="search" size={18} color={c.textSub} />
         <Text style={styles.searchPlaceholder}>오늘 당신에게 필요한 쉼은 무엇인가요?</Text>
       </Pressable>
 
@@ -117,12 +121,7 @@ export default function HomeScreen() {
                 key={spot.id}
                 style={({ pressed }) => [styles.recommendCard, pressed && styles.pressed]}
                 onPress={() => router.push(`/spot/${spot.id}`)}>
-                <Image
-                  source={{ uri: spot.image }}
-                  style={styles.recommendImage}
-                  contentFit="cover"
-                  transition={200}
-                />
+                <SpotImage uri={spot.image} style={styles.recommendImage} />
                 <View style={styles.recommendBody}>
                   <Text style={styles.recommendName} numberOfLines={1}>
                     {spot.name}
@@ -165,12 +164,12 @@ export default function HomeScreen() {
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="leaf-outline" size={32} color={colors.sageLight} />
+            <Ionicons name="leaf-outline" size={32} color={c.sageLight} />
             <Text style={styles.emptyText}>조건에 맞는 스팟이 아직 없어요</Text>
           </View>
         }
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.sage} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.sage} />
         }
       />
 
@@ -190,11 +189,9 @@ export default function HomeScreen() {
                 setLocationPickerOpen(false);
                 refreshLocation();
               }}>
-              <Ionicons name="navigate" size={16} color={colors.sage} />
+              <Ionicons name="navigate" size={16} color={c.sage} />
               <Text style={styles.areaText}>현재 위치 사용 (GPS)</Text>
-              {locationOverride === null && (
-                <Ionicons name="checkmark" size={16} color={colors.sage} />
-              )}
+              {locationOverride === null && <Ionicons name="checkmark" size={16} color={c.sage} />}
             </Pressable>
             {PRESET_AREAS.map((area) => (
               <Pressable
@@ -204,11 +201,9 @@ export default function HomeScreen() {
                   setLocationOverride(area);
                   setLocationPickerOpen(false);
                 }}>
-                <Ionicons name="location-outline" size={16} color={colors.textSub} />
+                <Ionicons name="location-outline" size={16} color={c.textSub} />
                 <Text style={styles.areaText}>{area}</Text>
-                {locationOverride === area && (
-                  <Ionicons name="checkmark" size={16} color={colors.sage} />
-                )}
+                {locationOverride === area && <Ionicons name="checkmark" size={16} color={c.sage} />}
               </Pressable>
             ))}
           </Pressable>
@@ -218,164 +213,165 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.beigeBg,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xl,
-  },
-  headerWrap: {
-    gap: spacing.md,
-    marginBottom: spacing.md,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  locationLabel: {
-    fontSize: 12,
-    color: colors.textSub,
-    marginBottom: 4,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  locationText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: colors.textMain,
-  },
-  avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: colors.sageSoft,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: colors.cardBg,
-    borderRadius: radius.input,
-    paddingHorizontal: 18,
-    height: 52,
-    ...shadow.card,
-  },
-  searchPlaceholder: {
-    flex: 1,
-    fontSize: 14,
-    color: colors.textSub,
-  },
-  tagWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: spacing.sm,
-  },
-  sectionTitle: {
-    fontSize: 19,
-    fontWeight: '800',
-    color: colors.textMain,
-  },
-  sectionLink: {
-    fontSize: 13,
-    color: colors.sage,
-    fontWeight: '600',
-  },
-  recommendRow: {
-    gap: 12,
-  },
-  recommendCard: {
-    width: 200,
-    backgroundColor: colors.cardBg,
-    borderRadius: radius.card,
-    overflow: 'hidden',
-    ...shadow.card,
-  },
-  pressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
-  },
-  recommendImage: {
-    height: 110,
-    backgroundColor: colors.sageSoft,
-  },
-  recommendBody: {
-    padding: 12,
-    gap: 6,
-  },
-  recommendName: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.textMain,
-  },
-  recommendMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  recommendTag: {
-    fontSize: 12,
-    color: colors.sage,
-    fontWeight: '600',
-  },
-  cardWrap: {
-    marginBottom: spacing.md,
-  },
-  empty: {
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 48,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: colors.textSub,
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.lg,
-  },
-  modalCard: {
-    width: '100%',
-    maxWidth: 340,
-    backgroundColor: colors.cardBg,
-    borderRadius: radius.card,
-    padding: spacing.md,
-    gap: 4,
-  },
-  modalTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: colors.textMain,
-    marginBottom: 8,
-    paddingHorizontal: 4,
-  },
-  areaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-  },
-  areaText: {
-    flex: 1,
-    fontSize: 14,
-    color: colors.textMain,
-  },
-});
+const createStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: c.beigeBg,
+    },
+    content: {
+      padding: spacing.lg,
+      paddingBottom: spacing.xl,
+    },
+    headerWrap: {
+      gap: spacing.md,
+      marginBottom: spacing.md,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    locationLabel: {
+      fontSize: 12,
+      color: c.textSub,
+      marginBottom: 4,
+    },
+    locationRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    locationText: {
+      fontSize: 17,
+      fontWeight: '700',
+      color: c.textMain,
+    },
+    avatar: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      backgroundColor: c.sageSoft,
+    },
+    searchBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      backgroundColor: c.cardBg,
+      borderRadius: radius.input,
+      paddingHorizontal: 18,
+      height: 52,
+      ...shadow.card,
+    },
+    searchPlaceholder: {
+      flex: 1,
+      fontSize: 14,
+      color: c.textSub,
+    },
+    tagWrap: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: spacing.sm,
+    },
+    sectionTitle: {
+      fontSize: 19,
+      fontWeight: '800',
+      color: c.textMain,
+    },
+    sectionLink: {
+      fontSize: 13,
+      color: c.sage,
+      fontWeight: '600',
+    },
+    recommendRow: {
+      gap: 12,
+    },
+    recommendCard: {
+      width: 200,
+      backgroundColor: c.cardBg,
+      borderRadius: radius.card,
+      overflow: 'hidden',
+      ...shadow.card,
+    },
+    pressed: {
+      opacity: 0.85,
+      transform: [{ scale: 0.98 }],
+    },
+    recommendImage: {
+      height: 110,
+      backgroundColor: c.sageSoft,
+    },
+    recommendBody: {
+      padding: 12,
+      gap: 6,
+    },
+    recommendName: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: c.textMain,
+    },
+    recommendMeta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+    },
+    recommendTag: {
+      fontSize: 12,
+      color: c.sage,
+      fontWeight: '600',
+    },
+    cardWrap: {
+      marginBottom: spacing.md,
+    },
+    empty: {
+      alignItems: 'center',
+      gap: 8,
+      paddingVertical: 48,
+    },
+    emptyText: {
+      fontSize: 14,
+      color: c.textSub,
+    },
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.4)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: spacing.lg,
+    },
+    modalCard: {
+      width: '100%',
+      maxWidth: 340,
+      backgroundColor: c.cardBg,
+      borderRadius: radius.card,
+      padding: spacing.md,
+      gap: 4,
+    },
+    modalTitle: {
+      fontSize: 17,
+      fontWeight: '800',
+      color: c.textMain,
+      marginBottom: 8,
+      paddingHorizontal: 4,
+    },
+    areaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingVertical: 12,
+      paddingHorizontal: 8,
+      borderRadius: 12,
+    },
+    areaText: {
+      flex: 1,
+      fontSize: 14,
+      color: c.textMain,
+    },
+  });

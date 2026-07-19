@@ -14,7 +14,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useToast } from '@/components/Toast';
-import { colors, radius, shadow, spacing } from '@/constants/theme';
+import { radius, shadow, spacing, type ThemeColors } from '@/constants/theme';
+import { useThemeColors, useThemedStyles } from '@/hooks/use-theme';
 import { useApp } from '@/store/app-context';
 
 // SOOM_AUTH_001 — 이메일 로그인 (데모: 서버 없이 형식 검증만)
@@ -22,6 +23,8 @@ export default function LoginScreen() {
   const router = useRouter();
   const toast = useToast();
   const { hydrated, user, login } = useApp();
+  const c = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -60,11 +63,11 @@ export default function LoginScreen() {
 
           <View style={styles.form}>
             <View style={styles.inputWrap}>
-              <Ionicons name="mail-outline" size={18} color={colors.textSub} />
+              <Ionicons name="mail-outline" size={18} color={c.textSub} />
               <TextInput
                 style={styles.input}
                 placeholder="이메일"
-                placeholderTextColor={colors.textSub}
+                placeholderTextColor={c.textSub}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -73,11 +76,11 @@ export default function LoginScreen() {
               />
             </View>
             <View style={styles.inputWrap}>
-              <Ionicons name="lock-closed-outline" size={18} color={colors.textSub} />
+              <Ionicons name="lock-closed-outline" size={18} color={c.textSub} />
               <TextInput
                 style={styles.input}
                 placeholder="비밀번호"
-                placeholderTextColor={colors.textSub}
+                placeholderTextColor={c.textSub}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -107,95 +110,96 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.beigeBg,
-  },
-  flex: {
-    flex: 1,
-  },
-  content: {
-    flexGrow: 1,
-    padding: spacing.lg,
-    justifyContent: 'center',
-    gap: spacing.xl,
-  },
-  hero: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  logoCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.sage,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: colors.textMain,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: colors.textSub,
-  },
-  form: {
-    gap: 12,
-  },
-  inputWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: colors.cardBg,
-    borderRadius: radius.input,
-    paddingHorizontal: 18,
-    height: 54,
-    ...shadow.card,
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: colors.textMain,
-    paddingVertical: 0,
-  },
-  submitBtn: {
-    backgroundColor: colors.sage,
-    borderRadius: radius.input,
-    height: 54,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
-  submitBtnDisabled: {
-    opacity: 0.5,
-  },
-  submitText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  forgot: {
-    textAlign: 'center',
-    fontSize: 13,
-    color: colors.textSub,
-    marginTop: 6,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  footerText: {
-    fontSize: 14,
-    color: colors.textSub,
-  },
-  footerLink: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: colors.sage,
-  },
-});
+const createStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: c.beigeBg,
+    },
+    flex: {
+      flex: 1,
+    },
+    content: {
+      flexGrow: 1,
+      padding: spacing.lg,
+      justifyContent: 'center',
+      gap: spacing.xl,
+    },
+    hero: {
+      alignItems: 'center',
+      gap: 8,
+    },
+    logoCircle: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      backgroundColor: c.sage,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 8,
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: '800',
+      color: c.textMain,
+    },
+    subtitle: {
+      fontSize: 14,
+      color: c.textSub,
+    },
+    form: {
+      gap: 12,
+    },
+    inputWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      backgroundColor: c.cardBg,
+      borderRadius: radius.input,
+      paddingHorizontal: 18,
+      height: 54,
+      ...shadow.card,
+    },
+    input: {
+      flex: 1,
+      fontSize: 15,
+      color: c.textMain,
+      paddingVertical: 0,
+    },
+    submitBtn: {
+      backgroundColor: c.sage,
+      borderRadius: radius.input,
+      height: 54,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 8,
+    },
+    submitBtnDisabled: {
+      opacity: 0.5,
+    },
+    submitText: {
+      color: '#FFFFFF',
+      fontSize: 16,
+      fontWeight: '800',
+    },
+    forgot: {
+      textAlign: 'center',
+      fontSize: 13,
+      color: c.textSub,
+      marginTop: 6,
+    },
+    footer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: 6,
+    },
+    footerText: {
+      fontSize: 14,
+      color: c.textSub,
+    },
+    footerLink: {
+      fontSize: 14,
+      fontWeight: '800',
+      color: c.sage,
+    },
+  });

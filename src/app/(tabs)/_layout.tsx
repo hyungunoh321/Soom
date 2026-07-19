@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
 
-import { colors } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme';
 import { useApp } from '@/store/app-context';
 
 // 하단 탭바 — 홈 · 지도 · 저장 · 마이 (4개 라벨 통일 규칙)
 export default function TabLayout() {
   const { hydrated, onboarded, user } = useApp();
+  const c = useThemeColors();
 
   // 저장된 상태 복원 전에는 아무것도 그리지 않는다 (깜빡임 방지)
   if (!hydrated) return null;
@@ -17,17 +18,17 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.sage,
-        tabBarInactiveTintColor: colors.textSub,
+        tabBarActiveTintColor: c.sage,
+        tabBarInactiveTintColor: c.textSub,
         tabBarStyle: {
-          backgroundColor: colors.cardBg,
-          borderTopColor: colors.border,
+          backgroundColor: c.cardBg,
+          borderTopColor: c.border,
         },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
         },
-        sceneStyle: { backgroundColor: colors.beigeBg },
+        sceneStyle: { backgroundColor: c.beigeBg },
       }}>
       <Tabs.Screen
         name="index"

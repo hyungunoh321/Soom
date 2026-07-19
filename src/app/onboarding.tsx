@@ -3,7 +3,8 @@ import { Redirect, useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, radius, spacing } from '@/constants/theme';
+import { radius, spacing, type ThemeColors } from '@/constants/theme';
+import { useThemeColors, useThemedStyles } from '@/hooks/use-theme';
 import { useApp } from '@/store/app-context';
 
 const VALUES = [
@@ -28,6 +29,8 @@ const VALUES = [
 export default function OnboardingScreen() {
   const router = useRouter();
   const { hydrated, onboarded, completeOnboarding } = useApp();
+  const c = useThemeColors();
+  const styles = useThemedStyles(createStyles);
 
   if (!hydrated) return null;
   if (onboarded) return <Redirect href="/auth/login" />;
@@ -46,7 +49,7 @@ export default function OnboardingScreen() {
         {VALUES.map((v) => (
           <View key={v.title} style={styles.valueRow}>
             <View style={styles.valueIcon}>
-              <Ionicons name={v.icon} size={22} color={colors.sage} />
+              <Ionicons name={v.icon} size={22} color={c.sage} />
             </View>
             <View style={styles.valueTextWrap}>
               <Text style={styles.valueTitle}>{v.title}</Text>
@@ -68,81 +71,82 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.beigeBg,
-    padding: spacing.lg,
-    justifyContent: 'space-between',
-  },
-  hero: {
-    alignItems: 'center',
-    gap: 12,
-    marginTop: 60,
-  },
-  logoCircle: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: colors.sage,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  appName: {
-    fontSize: 34,
-    fontWeight: '800',
-    color: colors.textMain,
-  },
-  tagline: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: colors.textSub,
-    textAlign: 'center',
-  },
-  values: {
-    gap: spacing.md,
-  },
-  valueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    backgroundColor: colors.cardBg,
-    borderRadius: radius.card,
-    padding: spacing.md,
-  },
-  valueIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: colors.sageSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  valueTextWrap: {
-    flex: 1,
-    gap: 3,
-  },
-  valueTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: colors.textMain,
-  },
-  valueDesc: {
-    fontSize: 13,
-    lineHeight: 19,
-    color: colors.textSub,
-  },
-  startBtn: {
-    backgroundColor: colors.sage,
-    borderRadius: radius.input,
-    height: 54,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
-  },
-  startText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
-  },
-});
+const createStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: c.beigeBg,
+      padding: spacing.lg,
+      justifyContent: 'space-between',
+    },
+    hero: {
+      alignItems: 'center',
+      gap: 12,
+      marginTop: 60,
+    },
+    logoCircle: {
+      width: 76,
+      height: 76,
+      borderRadius: 38,
+      backgroundColor: c.sage,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    appName: {
+      fontSize: 34,
+      fontWeight: '800',
+      color: c.textMain,
+    },
+    tagline: {
+      fontSize: 16,
+      lineHeight: 24,
+      color: c.textSub,
+      textAlign: 'center',
+    },
+    values: {
+      gap: spacing.md,
+    },
+    valueRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+      backgroundColor: c.cardBg,
+      borderRadius: radius.card,
+      padding: spacing.md,
+    },
+    valueIcon: {
+      width: 44,
+      height: 44,
+      borderRadius: 14,
+      backgroundColor: c.sageSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    valueTextWrap: {
+      flex: 1,
+      gap: 3,
+    },
+    valueTitle: {
+      fontSize: 15,
+      fontWeight: '800',
+      color: c.textMain,
+    },
+    valueDesc: {
+      fontSize: 13,
+      lineHeight: 19,
+      color: c.textSub,
+    },
+    startBtn: {
+      backgroundColor: c.sage,
+      borderRadius: radius.input,
+      height: 54,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: spacing.sm,
+    },
+    startText: {
+      color: '#FFFFFF',
+      fontSize: 16,
+      fontWeight: '800',
+    },
+  });

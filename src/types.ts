@@ -2,6 +2,14 @@ export type CongestionLevel = 'low' | 'mid' | 'high';
 
 export type TimeSlot = '오전' | '오후' | '저녁' | '심야';
 
+export type ThemeSetting = 'system' | 'light' | 'dark';
+
+// 사용자가 남긴 실시간 혼잡도 제보 (일정 시간 동안만 유효)
+export interface CongestionReport {
+  level: CongestionLevel;
+  at: number; // epoch ms
+}
+
 export interface Review {
   id: string;
   author: string;
@@ -10,6 +18,8 @@ export interface Review {
   rating: number; // 1~5
   text: string;
   photos: string[]; // 이미지 URL
+  tags?: string[]; // 분위기 태그
+  likes?: number; // 기본 '도움돼요' 수 (내 좋아요는 별도 저장)
 }
 
 export interface Spot {

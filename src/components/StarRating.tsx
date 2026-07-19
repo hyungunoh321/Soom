@@ -1,13 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors } from '@/constants/theme';
+import { type ThemeColors } from '@/constants/theme';
+import { useThemeColors, useThemedStyles } from '@/hooks/use-theme';
 
 /** 점수 표시용: ⭐ 4.8 */
 export function RatingScore({ rating, size = 15 }: { rating: number; size?: number }) {
+  const c = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.scoreRow}>
-      <Ionicons name="star" size={size} color={colors.star} />
+      <Ionicons name="star" size={size} color={c.star} />
       <Text style={[styles.scoreText, { fontSize: size }]}>{rating.toFixed(1)}</Text>
     </View>
   );
@@ -22,17 +25,16 @@ interface StarRatingProps {
 }
 
 /** 별 5개 표시/입력용 */
-export function StarRating({ rating, size = 20, color = colors.star, onChange }: StarRatingProps) {
+export function StarRating({ rating, size = 20, color, onChange }: StarRatingProps) {
+  const c = useThemeColors();
+  const styles = useThemedStyles(createStyles);
+  const fill = color ?? c.star;
   return (
     <View style={styles.starsRow}>
       {[1, 2, 3, 4, 5].map((n) => {
         const icon = rating >= n ? 'star' : rating >= n - 0.5 ? 'star-half' : 'star-outline';
         const star = (
-          <Ionicons
-            name={icon}
-            size={size}
-            color={rating >= n - 0.5 ? color : '#C9CDD2'}
-          />
+          <Ionicons name={icon} size={size} color={rating >= n - 0.5 ? fill : c.starEmpty} />
         );
         if (!onChange) return <View key={n}>{star}</View>;
         return (
@@ -45,18 +47,19 @@ export function StarRating({ rating, size = 20, color = colors.star, onChange }:
   );
 }
 
-const styles = StyleSheet.create({
-  scoreRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  scoreText: {
-    fontWeight: '700',
-    color: colors.textMain,
-  },
-  starsRow: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-});
+const createStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    scoreRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    scoreText: {
+      fontWeight: '700',
+      color: c.textMain,
+    },
+    starsRow: {
+      flexDirection: 'row',
+      gap: 6,
+    },
+  });

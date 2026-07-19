@@ -2,7 +2,8 @@ import { createContext, useCallback, useContext, useRef, useState } from 'react'
 import { Animated, StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, radius, shadow } from '@/constants/theme';
+import { radius, shadow, type ThemeColors } from '@/constants/theme';
+import { useThemedStyles } from '@/hooks/use-theme';
 
 interface ToastState {
   show: (message: string) => void;
@@ -13,6 +14,7 @@ const ToastContext = createContext<ToastState | null>(null);
 // 하단에 잠시 떠오르는 피드백 토스트 (Alert 대체 — 웹/네이티브 공통 동작)
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const insets = useSafeAreaInsets();
+  const styles = useThemedStyles(createStyles);
   const [message, setMessage] = useState<string | null>(null);
   const opacity = useRef(new Animated.Value(0)).current;
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -51,21 +53,22 @@ export function useToast(): ToastState {
   return ctx;
 }
 
-const styles = StyleSheet.create({
-  toast: {
-    position: 'absolute',
-    alignSelf: 'center',
-    backgroundColor: colors.textMain,
-    borderRadius: radius.chip,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    maxWidth: '85%',
-    ...shadow.card,
-  },
-  text: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-});
+const createStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    toast: {
+      position: 'absolute',
+      alignSelf: 'center',
+      backgroundColor: c.textMain,
+      borderRadius: radius.chip,
+      paddingHorizontal: 20,
+      paddingVertical: 12,
+      maxWidth: '85%',
+      ...shadow.card,
+    },
+    text: {
+      color: c.beigeBg,
+      fontSize: 14,
+      fontWeight: '600',
+      textAlign: 'center',
+    },
+  });

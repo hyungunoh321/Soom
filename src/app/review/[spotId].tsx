@@ -18,8 +18,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StarRating } from '@/components/StarRating';
 import { TagChip } from '@/components/TagChip';
 import { useToast } from '@/components/Toast';
-import { colors, radius, spacing } from '@/constants/theme';
+import { radius, spacing, type ThemeColors } from '@/constants/theme';
 import { MOOD_TAGS, getSpot } from '@/data/spots';
+import { useThemeColors, useThemedStyles } from '@/hooks/use-theme';
 import { useApp } from '@/store/app-context';
 import { persistPhoto } from '@/utils/photos';
 
@@ -31,13 +32,15 @@ export default function ReviewWriteScreen() {
   const router = useRouter();
   const toast = useToast();
   const { user, myReviews, addReview, updateReview } = useApp();
+  const c = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const spot = getSpot(spotId);
 
   const editing = (myReviews[spotId] ?? []).find((r) => r.id === reviewId);
 
   const [photos, setPhotos] = useState<string[]>(editing?.photos ?? []);
   const [rating, setRating] = useState(editing?.rating ?? 0);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>(editing?.tags ?? []);
   const [text, setText] = useState(editing?.text ?? '');
 
   if (!spot) {
@@ -95,7 +98,12 @@ export default function ReviewWriteScreen() {
       return;
     }
     if (editing) {
-      updateReview(spot.id, editing.id, { rating, text: text.trim(), photos });
+      updateReview(spot.id, editing.id, {
+        rating,
+        text: text.trim(),
+        photos,
+        tags: selectedTags,
+      });
       toast.show('후기를 수정했어요.');
     } else {
       const now = new Date();
@@ -107,6 +115,7 @@ export default function ReviewWriteScreen() {
         rating,
         text: text.trim(),
         photos,
+        tags: selectedTags,
       });
       toast.show('후기가 등록되었어요.');
     }
@@ -121,7 +130,7 @@ export default function ReviewWriteScreen() {
         {/* 헤더 */}
         <View style={styles.header}>
           <Pressable onPress={goBack} hitSlop={8} accessibilityRole="button">
-            <Ionicons name="chevron-back" size={24} color={colors.textMain} />
+            <Ionicons name="chevron-back" size={24} color={c.textMain} />
           </Pressable>
           <Text style={styles.headerTitle} numberOfLines={1}>
             {spot.name}
@@ -138,7 +147,7 @@ export default function ReviewWriteScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.photoRow}>
               <Pressable style={styles.photoAdd} onPress={addPhoto} accessibilityRole="button">
-                <Ionicons name="camera" size={28} color={colors.sage} />
+                <Ionicons name="camera" size={28} color={c.sage} />
                 <Text style={styles.photoCount}>
                   {photos.length}/{MAX_PHOTOS}
                 </Text>
@@ -161,7 +170,7 @@ export default function ReviewWriteScreen() {
 
           {/* 별점 */}
           <Text style={styles.sectionTitle}>얼마나 편안했나요?</Text>
-          <StarRating rating={rating} size={40} color={colors.sage} onChange={setRating} />
+          <StarRating rating={rating} size={40} color={c.sage} onChange={setRating} />
 
           {/* 분위기 태그 */}
           <Text style={styles.sectionTitle}>이 공간의 분위기</Text>
@@ -181,7 +190,7 @@ export default function ReviewWriteScreen() {
           <TextInput
             style={styles.textArea}
             placeholder="이 공간에서 어떤 휴식을 느끼셨나요?"
-            placeholderTextColor={colors.textSub}
+            placeholderTextColor={c.textSub}
             multiline
             textAlignVertical="top"
             value={text}
@@ -203,115 +212,116 @@ export default function ReviewWriteScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.beigeBg,
-  },
-  flex: {
-    flex: 1,
-  },
-  notFound: {
-    padding: spacing.lg,
-    fontSize: 15,
-    color: colors.textSub,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.textMain,
-  },
-  content: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
-    gap: spacing.md,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: colors.textMain,
-    marginTop: spacing.sm,
-  },
-  photoRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  photoAdd: {
-    width: 96,
-    height: 96,
-    borderRadius: radius.card,
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: colors.sageLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  photoCount: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.sage,
-  },
-  photoWrap: {
-    width: 96,
-    height: 96,
-  },
-  photo: {
-    flex: 1,
-    borderRadius: radius.card,
-    backgroundColor: colors.sageSoft,
-  },
-  photoRemove: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tagWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  textArea: {
-    backgroundColor: colors.cardBg,
-    borderRadius: radius.card,
-    padding: spacing.md,
-    minHeight: 180,
-    fontSize: 14,
-    lineHeight: 22,
-    color: colors.textMain,
-  },
-  footer: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  submitBtn: {
-    backgroundColor: colors.sage,
-    borderRadius: radius.input,
-    height: 54,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  submitBtnDisabled: {
-    opacity: 0.5,
-  },
-  submitText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
-  },
-});
+const createStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: c.beigeBg,
+    },
+    flex: {
+      flex: 1,
+    },
+    notFound: {
+      padding: spacing.lg,
+      fontSize: 15,
+      color: c.textSub,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+    },
+    headerTitle: {
+      flex: 1,
+      textAlign: 'center',
+      fontSize: 18,
+      fontWeight: '800',
+      color: c.textMain,
+    },
+    content: {
+      paddingHorizontal: spacing.lg,
+      paddingBottom: spacing.lg,
+      gap: spacing.md,
+    },
+    sectionTitle: {
+      fontSize: 17,
+      fontWeight: '800',
+      color: c.textMain,
+      marginTop: spacing.sm,
+    },
+    photoRow: {
+      flexDirection: 'row',
+      gap: 12,
+    },
+    photoAdd: {
+      width: 96,
+      height: 96,
+      borderRadius: radius.card,
+      borderWidth: 2,
+      borderStyle: 'dashed',
+      borderColor: c.sageLight,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
+    },
+    photoCount: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: c.sage,
+    },
+    photoWrap: {
+      width: 96,
+      height: 96,
+    },
+    photo: {
+      flex: 1,
+      borderRadius: radius.card,
+      backgroundColor: c.sageSoft,
+    },
+    photoRemove: {
+      position: 'absolute',
+      top: 6,
+      right: 6,
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: 'rgba(0,0,0,0.55)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    tagWrap: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    textArea: {
+      backgroundColor: c.cardBg,
+      borderRadius: radius.card,
+      padding: spacing.md,
+      minHeight: 180,
+      fontSize: 14,
+      lineHeight: 22,
+      color: c.textMain,
+    },
+    footer: {
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+    },
+    submitBtn: {
+      backgroundColor: c.sage,
+      borderRadius: radius.input,
+      height: 54,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    submitBtnDisabled: {
+      opacity: 0.5,
+    },
+    submitText: {
+      color: '#FFFFFF',
+      fontSize: 16,
+      fontWeight: '800',
+    },
+  });
