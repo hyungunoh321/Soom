@@ -5,7 +5,9 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { CongestionBadge } from '@/components/CongestionBadge';
 import { RatingScore } from '@/components/StarRating';
 import { TagChip } from '@/components/TagChip';
+import { useToast } from '@/components/Toast';
 import { colors, radius, shadow } from '@/constants/theme';
+import { getCurrentCongestion } from '@/data/spots';
 import { useApp } from '@/store/app-context';
 import type { Spot } from '@/types';
 
@@ -17,6 +19,7 @@ interface SpotCardProps {
 // 홈/저장 목록에서 쓰는 스팟 카드 (시안: 이미지 + 혼잡도 배지 + 북마크 + 이름/거리/별점/태그)
 export function SpotCard({ spot, onPress }: SpotCardProps) {
   const { isBookmarked, toggleBookmark } = useApp();
+  const toast = useToast();
   const bookmarked = isBookmarked(spot.id);
 
   return (
@@ -25,12 +28,13 @@ export function SpotCard({ spot, onPress }: SpotCardProps) {
       <View style={styles.imageWrap}>
         <Image source={{ uri: spot.image }} style={styles.image} contentFit="cover" transition={200} />
         <View style={styles.badgeWrap}>
-          <CongestionBadge level={spot.congestion} />
+          <CongestionBadge level={getCurrentCongestion(spot)} />
         </View>
         <Pressable
           style={styles.bookmarkBtn}
           onPress={(e) => {
             e.stopPropagation();
+            toast.show(bookmarked ? '저장 목록에서 뺐어요.' : '저장 목록에 담았어요.');
             toggleBookmark(spot.id);
           }}
           hitSlop={8}

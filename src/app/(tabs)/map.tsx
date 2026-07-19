@@ -9,7 +9,7 @@ import { CONGESTION_META } from '@/components/CongestionBadge';
 import { RatingScore } from '@/components/StarRating';
 import { TagChip } from '@/components/TagChip';
 import { colors, radius, shadow, spacing } from '@/constants/theme';
-import { MOOD_TAGS, SPOTS } from '@/data/spots';
+import { MOOD_TAGS, SPOTS, getCurrentCongestion } from '@/data/spots';
 import type { Spot } from '@/types';
 
 // SOOM_MAP_001 — 지도 위 힐링 스팟 마커 표시 및 탐색
@@ -120,13 +120,17 @@ export default function MapScreen() {
                 <View
                   style={[
                     styles.congestionDot,
-                    { backgroundColor: CONGESTION_META[visibleSelected.congestion].color },
+                    {
+                      backgroundColor:
+                        CONGESTION_META[getCurrentCongestion(visibleSelected)].color,
+                    },
                   ]}
                 />
                 <Text style={styles.congestionText}>
                   현재 혼잡도:{' '}
-                  <Text style={{ color: CONGESTION_META[visibleSelected.congestion].color }}>
-                    {CONGESTION_META[visibleSelected.congestion].label}
+                  <Text
+                    style={{ color: CONGESTION_META[getCurrentCongestion(visibleSelected)].color }}>
+                    {CONGESTION_META[getCurrentCongestion(visibleSelected)].label}
                   </Text>
                 </Text>
               </View>

@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -16,26 +17,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { StarRating } from '@/components/StarRating';
 import { TagChip } from '@/components/TagChip';
+import { useToast } from '@/components/Toast';
 import { colors, radius, spacing } from '@/constants/theme';
 import { MOOD_TAGS, getSpot } from '@/data/spots';
 import { useApp } from '@/store/app-context';
 
 const MAX_PHOTOS = 5;
 
-// 목업용 샘플 사진 풀 — 실제 앱에서는 expo-image-picker로 교체
-const SAMPLE_PHOTOS = [
-  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=600&q=60',
-  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=60',
-  'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=600&q=60',
-  'https://images.unsplash.com/photo-1444723121867-7a241cacace9?auto=format&fit=crop&w=600&q=60',
-  'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=600&q=60',
-];
-
 // SOOM_SPOT_003 — 사진 업로드 및 후기 텍스트 작성
 export default function ReviewWriteScreen() {
   const { spotId } = useLocalSearchParams<{ spotId: string }>();
   const router = useRouter();
-  const { addReview } = useApp();
+  const toast = useToast();
+  const { user, addReview } = useApp();
   const spot = getSpot(spotId);
 
   const [photos, setPhotos] = useState<string[]>([]);
@@ -51,11 +45,26 @@ export default function ReviewWriteScreen() {
     );
   }
 
-  const addPhoto = () => {
-    if (photos.length >= MAX_PHOTOS) return;
-    // 목업: 샘플 풀에서 아직 안 쓴 사진을 하나 추가
-    const next = SAMPLE_PHOTOS.find((p) => !photos.includes(p));
-    if (next) setPhotos([...photos, next]);
+  const addPhoto = async () => {
+    if (photos.length >= MAX_PHOTOS) {
+      toast.show(`사진은 최대 ${MAX_PHOTOS}장까지 올릴 수 있어요.`);
+      return;
+    }
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      toast.show('사진 접근 권한이 필요해요.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      selectionLimit: MAX_PHOTOS - photos.length,
+      quality: 0.7,
+    });
+    if (!result.canceled) {
+      const uris = result.assets.map((a) => a.uri);
+      setPhotos((prev) => [...prev, ...uris].slice(0, MAX_PHOTOS));
+    }
   };
 
   const removePhoto = (uri: string) => {
@@ -71,17 +80,21 @@ export default function ReviewWriteScreen() {
   const canSubmit = rating > 0 && text.trim().length > 0;
 
   const submit = () => {
-    // Alert는 웹에서 동작하지 않으므로 버튼 비활성 스타일로 검증을 안내하고 즉시 복귀한다
-    if (!canSubmit) return;
+    if (!canSubmit) {
+      toast.show('별점과 후기 내용을 입력해 주세요.');
+      return;
+    }
+    const now = new Date();
     addReview(spot.id, {
       id: `my-${Date.now()}`,
-      author: '서연',
-      avatar: 'https://i.pravatar.cc/100?img=44',
-      date: '2026.07',
+      author: user?.name ?? '익명',
+      avatar: user?.avatar,
+      date: `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}`,
       rating,
       text: text.trim(),
       photos,
     });
+    toast.show('후기가 등록되었어요.');
     router.back();
   };
 

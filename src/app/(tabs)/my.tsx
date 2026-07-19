@@ -1,37 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { colors, radius, shadow, spacing } from '@/constants/theme';
 import { getSpot } from '@/data/spots';
 import { useApp } from '@/store/app-context';
 
-// 시안의 "내가 작성한 후기" 기본 카드 (아직 작성한 후기가 없을 때 예시로 표시)
-const SAMPLE_MY_REVIEWS = [
-  {
-    id: 'sample-1',
-    title: '비밀의 숲길 산책로',
-    date: '2026.05',
-    image:
-      'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=600&q=60',
-    spotId: 'night-trail',
-  },
-  {
-    id: 'sample-2',
-    title: '창가 자리가 예쁜 카페',
-    date: '2026.04',
-    image:
-      'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=600&q=60',
-    spotId: 'space-rest',
-  },
-];
-
 // SOOM_MY_001(내 정보) + SOOM_MY_002(내 후기)
 export default function MyScreen() {
   const router = useRouter();
-  const { bookmarks, myReviews } = useApp();
+  const { user, bookmarks, myReviews, lists, logout } = useApp();
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
   const writtenReviews = Object.entries(myReviews).flatMap(([spotId, reviews]) =>
     reviews.map((r) => ({
@@ -42,8 +25,6 @@ export default function MyScreen() {
       spotId,
     })),
   );
-  const myReviewCards = [...writtenReviews, ...SAMPLE_MY_REVIEWS];
-  const reviewCount = writtenReviews.length + SAMPLE_MY_REVIEWS.length;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -51,74 +32,111 @@ export default function MyScreen() {
         {/* 헤더 */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>마이페이지</Text>
-          <Ionicons name="settings-sharp" size={22} color={colors.sage} />
+          <Pressable onPress={() => router.push('/settings/account')} hitSlop={8}>
+            <Ionicons name="settings-sharp" size={22} color={colors.sage} />
+          </Pressable>
         </View>
 
         {/* 프로필 */}
         <View style={styles.profile}>
           <View>
-            <Image
-              source={{ uri: 'https://i.pravatar.cc/200?img=44' }}
-              style={styles.avatar}
-              contentFit="cover"
-            />
+            <Image source={{ uri: user?.avatar }} style={styles.avatar} contentFit="cover" />
             <View style={styles.cameraBadge}>
               <Ionicons name="camera" size={14} color="#FFFFFF" />
             </View>
           </View>
-          <Text style={styles.name}>서연</Text>
-          <Text style={styles.bio}>조용한 산책을 좋아해요</Text>
+          <Text style={styles.name}>{user?.name}</Text>
+          <Text style={styles.bio}>{user?.bio}</Text>
         </View>
 
         {/* 활동 내역 */}
         <View style={styles.statsCard}>
           <StatItem label="저장한 스팟" value={bookmarks.length} />
           <View style={styles.statDivider} />
-          <StatItem label="작성한 후기" value={reviewCount} />
+          <StatItem label="작성한 후기" value={writtenReviews.length} />
           <View style={styles.statDivider} />
-          <StatItem label="방문한 코스" value={3} />
+          <StatItem label="힐링 리스트" value={lists.length} />
         </View>
 
         {/* 내가 작성한 후기 */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>내가 작성한 후기</Text>
-          <View style={styles.sectionLinkRow}>
+          <Pressable style={styles.sectionLinkRow} onPress={() => router.push('/my-reviews')}>
             <Text style={styles.sectionLink}>전체보기</Text>
             <Ionicons name="chevron-forward" size={14} color={colors.textSub} />
-          </View>
+          </Pressable>
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={styles.reviewRow}>
-            {myReviewCards.map((card) => (
-              <Pressable
-                key={card.id}
-                style={styles.reviewCard}
-                onPress={() => router.push(`/spot/${card.spotId}`)}
-                accessibilityRole="button">
-                <Image source={{ uri: card.image }} style={styles.reviewImage} contentFit="cover" />
-                <View style={styles.reviewBody}>
-                  <Text style={styles.reviewTitle} numberOfLines={1}>
-                    {card.title}
-                  </Text>
-                  <View style={styles.reviewDateRow}>
-                    <Ionicons name="star" size={13} color={colors.sageLight} />
-                    <Text style={styles.reviewDate}>{card.date}</Text>
+
+        {writtenReviews.length > 0 ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={styles.reviewRow}>
+              {writtenReviews.map((card) => (
+                <Pressable
+                  key={card.id}
+                  style={styles.reviewCard}
+                  onPress={() => router.push(`/spot/${card.spotId}`)}>
+                  <Image source={{ uri: card.image }} style={styles.reviewImage} contentFit="cover" />
+                  <View style={styles.reviewBody}>
+                    <Text style={styles.reviewTitle} numberOfLines={1}>
+                      {card.title}
+                    </Text>
+                    <View style={styles.reviewDateRow}>
+                      <Ionicons name="star" size={13} color={colors.sageLight} />
+                      <Text style={styles.reviewDate}>{card.date}</Text>
+                    </View>
                   </View>
-                </View>
-              </Pressable>
-            ))}
+                </Pressable>
+              ))}
+            </View>
+          </ScrollView>
+        ) : (
+          <View style={styles.emptyReview}>
+            <Ionicons name="create-outline" size={26} color={colors.sageLight} />
+            <Text style={styles.emptyReviewText}>
+              방문한 스팟에 첫 후기를 남기면 여기에 모여요.
+            </Text>
           </View>
-        </ScrollView>
+        )}
 
         {/* 설정 */}
         <Text style={styles.settingsLabel}>설정</Text>
         <View style={styles.settingsList}>
-          <SettingRow icon="notifications" label="알림 설정" />
-          <SettingRow icon="shield-checkmark" label="계정 관리" />
-          <SettingRow icon="information-circle" label="고객 센터" />
-          <SettingRow icon="log-out-outline" label="로그아웃" danger />
+          <SettingRow
+            icon="notifications"
+            label="알림 설정"
+            onPress={() => router.push('/settings/notifications')}
+          />
+          <SettingRow
+            icon="shield-checkmark"
+            label="계정 관리"
+            onPress={() => router.push('/settings/account')}
+          />
+          <SettingRow
+            icon="information-circle"
+            label="고객 센터"
+            onPress={() => router.push('/settings/support')}
+          />
+          <SettingRow
+            icon="log-out-outline"
+            label="로그아웃"
+            danger
+            onPress={() => setConfirmLogout(true)}
+          />
         </View>
       </ScrollView>
+
+      <ConfirmDialog
+        visible={confirmLogout}
+        title="로그아웃"
+        message="정말 로그아웃할까요? 저장한 스팟과 후기는 기기에 안전하게 남아 있어요."
+        confirmLabel="로그아웃"
+        danger
+        onCancel={() => setConfirmLogout(false)}
+        onConfirm={() => {
+          setConfirmLogout(false);
+          logout();
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -136,13 +154,15 @@ function SettingRow({
   icon,
   label,
   danger = false,
+  onPress,
 }: {
   icon: React.ComponentProps<typeof Ionicons>['name'];
   label: string;
   danger?: boolean;
+  onPress?: () => void;
 }) {
   return (
-    <Pressable style={styles.settingRow} accessibilityRole="button">
+    <Pressable style={styles.settingRow} onPress={onPress} accessibilityRole="button">
       <View style={styles.settingLeft}>
         <View style={[styles.settingIcon, danger && styles.settingIconDanger]}>
           <Ionicons name={icon} size={18} color={danger ? colors.logout : colors.sage} />
@@ -288,6 +308,17 @@ const styles = StyleSheet.create({
   },
   reviewDate: {
     fontSize: 12,
+    color: colors.textSub,
+  },
+  emptyReview: {
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.cardBg,
+    borderRadius: radius.card,
+    paddingVertical: 28,
+  },
+  emptyReviewText: {
+    fontSize: 13,
     color: colors.textSub,
   },
   settingsLabel: {

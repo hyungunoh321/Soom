@@ -1,20 +1,43 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { RatingScore } from '@/components/StarRating';
 import { SpotCard } from '@/components/SpotCard';
 import { TagChip } from '@/components/TagChip';
 import { colors, radius, shadow, spacing } from '@/constants/theme';
-import { MOOD_TAGS, SPOTS } from '@/data/spots';
+import { MOOD_TAGS, SPOTS, recommendSpots } from '@/data/spots';
+import { useLocationLabel } from '@/hooks/use-location';
+import { useApp } from '@/store/app-context';
 
-// SOOM_HOME_001 — 위치 기반 주변 힐링 스팟 추천 목록
+// SOOM_HOME_001(추천 스팟) + SOOM_HOME_002(맞춤 추천)
 export default function HomeScreen() {
   const router = useRouter();
+  const { user, bookmarks, myReviews } = useApp();
+  const { label: locationLabel, refresh: refreshLocation } = useLocationLabel();
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+
+  const reviewedSpotIds = useMemo(
+    () => Object.keys(myReviews).filter((id) => (myReviews[id] ?? []).length > 0),
+    [myReviews],
+  );
+  const recommended = useMemo(
+    () => recommendSpots(bookmarks, reviewedSpotIds),
+    [bookmarks, reviewedSpotIds],
+  );
 
   const spots = useMemo(() => {
     let list = SPOTS;
@@ -28,24 +51,33 @@ export default function HomeScreen() {
     return list;
   }, [selectedTag, query]);
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refreshLocation();
+    setRefreshing(false);
+  }, [refreshLocation]);
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.sage} />
+        }>
         {/* 현재 위치 헤더 */}
         <View style={styles.header}>
           <View>
             <Text style={styles.locationLabel}>현재 위치</Text>
             <View style={styles.locationRow}>
               <Ionicons name="location-sharp" size={16} color={colors.sage} />
-              <Text style={styles.locationText}>서울시 마포구 연남동</Text>
+              <Text style={styles.locationText}>{locationLabel}</Text>
               <Ionicons name="chevron-down" size={16} color={colors.textSub} />
             </View>
           </View>
-          <Image
-            source={{ uri: 'https://i.pravatar.cc/100?img=44' }}
-            style={styles.avatar}
-            contentFit="cover"
-          />
+          <Pressable onPress={() => router.push('/my')}>
+            <Image source={{ uri: user?.avatar }} style={styles.avatar} contentFit="cover" />
+          </Pressable>
         </View>
 
         {/* 검색바 */}
@@ -59,6 +91,11 @@ export default function HomeScreen() {
             onChangeText={setQuery}
             returnKeyType="search"
           />
+          {query.length > 0 && (
+            <Pressable onPress={() => setQuery('')} hitSlop={8}>
+              <Ionicons name="close-circle" size={18} color={colors.textSub} />
+            </Pressable>
+          )}
         </View>
 
         {/* 분위기 태그 필터 */}
@@ -74,10 +111,52 @@ export default function HomeScreen() {
           ))}
         </View>
 
+        {/* 맞춤 추천 (SOOM_HOME_002) — 검색/필터 중에는 숨김 */}
+        {!selectedTag && !query.trim() && (
+          <>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>
+                {user?.name ?? '당신'}님을 위한 오늘의 쉼
+              </Text>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.recommendRow}>
+              {recommended.map((spot) => (
+                <Pressable
+                  key={spot.id}
+                  style={styles.recommendCard}
+                  onPress={() => router.push(`/spot/${spot.id}`)}>
+                  <Image
+                    source={{ uri: spot.image }}
+                    style={styles.recommendImage}
+                    contentFit="cover"
+                    transition={200}
+                  />
+                  <View style={styles.recommendBody}>
+                    <Text style={styles.recommendName} numberOfLines={1}>
+                      {spot.name}
+                    </Text>
+                    <View style={styles.recommendMeta}>
+                      <RatingScore rating={spot.rating} size={12} />
+                      <Text style={styles.recommendTag} numberOfLines={1}>
+                        #{spot.tags[0]}
+                      </Text>
+                    </View>
+                  </View>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </>
+        )}
+
         {/* 주변 힐링 스팟 */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>주변 힐링 스팟</Text>
-          <Text style={styles.sectionLink}>전체보기</Text>
+          <Pressable onPress={() => router.push('/map')}>
+            <Text style={styles.sectionLink}>전체보기</Text>
+          </Pressable>
         </View>
 
         <View style={styles.cardList}>
@@ -167,6 +246,40 @@ const styles = StyleSheet.create({
   },
   sectionLink: {
     fontSize: 13,
+    color: colors.sage,
+    fontWeight: '600',
+  },
+  recommendRow: {
+    gap: 12,
+  },
+  recommendCard: {
+    width: 200,
+    backgroundColor: colors.cardBg,
+    borderRadius: radius.card,
+    overflow: 'hidden',
+    ...shadow.card,
+  },
+  recommendImage: {
+    height: 110,
+    backgroundColor: colors.sageSoft,
+  },
+  recommendBody: {
+    padding: 12,
+    gap: 6,
+  },
+  recommendName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textMain,
+  },
+  recommendMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  recommendTag: {
+    fontSize: 12,
     color: colors.sage,
     fontWeight: '600',
   },

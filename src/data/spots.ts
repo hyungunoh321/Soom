@@ -1,4 +1,4 @@
-import type { Spot } from '@/types';
+import type { CongestionLevel, Spot, TimeSlot } from '@/types';
 
 // 분위기 태그 (기획서 핵심 기능 3)
 export const MOOD_TAGS = ['조용함', '야경', '산책', '혼자 가기 좋음', '힐링'] as const;
@@ -212,4 +212,46 @@ export const SPOTS: Spot[] = [
 
 export function getSpot(id: string): Spot | undefined {
   return SPOTS.find((s) => s.id === id);
+}
+
+// 지금 시각이 속한 시간대
+export function currentTimeSlot(date = new Date()): TimeSlot {
+  const h = date.getHours();
+  if (h >= 6 && h < 12) return '오전';
+  if (h >= 12 && h < 18) return '오후';
+  if (h >= 18) return '저녁';
+  return '심야';
+}
+
+// 시간대별 데이터 기반의 "현재" 혼잡도 (카드/상세에서 실시간처럼 표시)
+export function getCurrentCongestion(spot: Spot, date = new Date()): CongestionLevel {
+  const v = spot.congestionByTime[currentTimeSlot(date)];
+  if (v < 0.4) return 'low';
+  if (v < 0.6) return 'mid';
+  return 'high';
+}
+
+// 맞춤 추천: 북마크·내 후기가 달린 스팟의 태그와 겹치는 정도로 점수화
+export function recommendSpots(
+  bookmarkIds: string[],
+  reviewedSpotIds: string[],
+  limit = 4,
+): Spot[] {
+  const likedTags = new Map<string, number>();
+  const likedIds = new Set([...bookmarkIds, ...reviewedSpotIds]);
+  for (const id of likedIds) {
+    for (const tag of getSpot(id)?.tags ?? []) {
+      likedTags.set(tag, (likedTags.get(tag) ?? 0) + 1);
+    }
+  }
+
+  const scored = SPOTS.filter((s) => !likedIds.has(s.id)).map((s) => ({
+    spot: s,
+    score:
+      s.tags.reduce((acc, t) => acc + (likedTags.get(t) ?? 0), 0) + s.rating / 10,
+  }));
+  scored.sort((a, b) => b.score - a.score);
+  const picks = scored.slice(0, limit).map((x) => x.spot);
+  // 취향 데이터가 없으면 평점순
+  return picks.length > 0 ? picks : [...SPOTS].sort((a, b) => b.rating - a.rating).slice(0, limit);
 }
