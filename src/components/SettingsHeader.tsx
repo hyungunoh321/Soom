@@ -9,7 +9,11 @@ export function SettingsHeader({ title }: { title: string }) {
   const router = useRouter();
   return (
     <View style={styles.header}>
-      <Pressable onPress={() => router.back()} hitSlop={8} accessibilityRole="button">
+      <Pressable
+        onPress={() => (router.canGoBack() ? router.back() : router.replace('/my'))}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel="뒤로가기">
         <Ionicons name="chevron-back" size={24} color={colors.textMain} />
       </Pressable>
       <Text style={styles.title}>{title}</Text>

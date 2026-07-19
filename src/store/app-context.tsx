@@ -41,6 +41,8 @@ interface PersistedState {
   myReviews: Record<string, Review[]>; // spotId -> 내가 쓴 후기
   lists: HealingList[];
   notifications: NotificationSettings;
+  searchHistory: string[];
+  locationOverride: string | null; // 사용자가 직접 고른 동네 (null이면 GPS)
 }
 
 const INITIAL: PersistedState = {
@@ -50,6 +52,8 @@ const INITIAL: PersistedState = {
   myReviews: {},
   lists: [],
   notifications: { spotRecommend: true, comment: true, marketing: false },
+  searchHistory: [],
+  locationOverride: null,
 };
 
 interface AppState extends PersistedState {
@@ -57,7 +61,11 @@ interface AppState extends PersistedState {
   isBookmarked: (spotId: string) => boolean;
   toggleBookmark: (spotId: string) => void;
   addReview: (spotId: string, review: Review) => void;
+  updateReview: (spotId: string, reviewId: string, patch: Partial<Review>) => void;
   deleteReview: (spotId: string, reviewId: string) => void;
+  addSearchTerm: (term: string) => void;
+  clearSearchHistory: () => void;
+  setLocationOverride: (label: string | null) => void;
   completeOnboarding: () => void;
   login: (user: UserProfile) => void;
   updateProfile: (patch: Partial<UserProfile>) => void;
@@ -116,6 +124,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ...s,
       myReviews: { ...s.myReviews, [spotId]: [review, ...(s.myReviews[spotId] ?? [])] },
     }));
+  }, []);
+
+  const updateReview = useCallback(
+    (spotId: string, reviewId: string, patch: Partial<Review>) => {
+      setState((s) => ({
+        ...s,
+        myReviews: {
+          ...s.myReviews,
+          [spotId]: (s.myReviews[spotId] ?? []).map((r) =>
+            r.id === reviewId ? { ...r, ...patch } : r,
+          ),
+        },
+      }));
+    },
+    [],
+  );
+
+  const addSearchTerm = useCallback((term: string) => {
+    const t = term.trim();
+    if (!t) return;
+    setState((s) => ({
+      ...s,
+      searchHistory: [t, ...s.searchHistory.filter((x) => x !== t)].slice(0, 10),
+    }));
+  }, []);
+
+  const clearSearchHistory = useCallback(() => {
+    setState((s) => ({ ...s, searchHistory: [] }));
+  }, []);
+
+  const setLocationOverride = useCallback((label: string | null) => {
+    setState((s) => ({ ...s, locationOverride: label }));
   }, []);
 
   const deleteReview = useCallback((spotId: string, reviewId: string) => {
@@ -190,7 +230,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       isBookmarked,
       toggleBookmark,
       addReview,
+      updateReview,
       deleteReview,
+      addSearchTerm,
+      clearSearchHistory,
+      setLocationOverride,
       completeOnboarding,
       login,
       updateProfile,
@@ -207,7 +251,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       isBookmarked,
       toggleBookmark,
       addReview,
+      updateReview,
       deleteReview,
+      addSearchTerm,
+      clearSearchHistory,
+      setLocationOverride,
       completeOnboarding,
       login,
       updateProfile,

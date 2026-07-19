@@ -90,7 +90,7 @@ export default function LoginScreen() {
               <Text style={styles.submitText}>로그인</Text>
             </Pressable>
 
-            <Pressable onPress={() => toast.show('데모 버전에서는 비밀번호 재설정을 지원하지 않아요.')}>
+            <Pressable onPress={() => router.push('/auth/reset')}>
               <Text style={styles.forgot}>비밀번호를 잊으셨나요?</Text>
             </Pressable>
           </View>

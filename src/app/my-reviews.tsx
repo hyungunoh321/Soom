@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -13,7 +13,7 @@ import { colors, radius, shadow, spacing } from '@/constants/theme';
 import { getSpot } from '@/data/spots';
 import { useApp } from '@/store/app-context';
 
-// SOOM_MY_002 — 내가 작성한 후기 전체 목록 (삭제 지원)
+// SOOM_MY_002 — 내가 작성한 후기 전체 목록 (수정/삭제 지원)
 export default function MyReviewsScreen() {
   const router = useRouter();
   const toast = useToast();
@@ -29,9 +29,13 @@ export default function MyReviewsScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <SettingsHeader title="내가 작성한 후기" />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {entries.map(({ spotId, review, spotName }) => (
-          <View key={review.id} style={styles.card}>
+      <FlatList
+        data={entries}
+        keyExtractor={(item) => item.review.id}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item: { spotId, review, spotName } }) => (
+          <View style={styles.card}>
             <Pressable style={styles.cardHeader} onPress={() => router.push(`/spot/${spotId}`)}>
               <View style={styles.cardHeaderLeft}>
                 <Text style={styles.spotName}>{spotName}</Text>
@@ -48,16 +52,29 @@ export default function MyReviewsScreen() {
                 ))}
               </View>
             )}
-            <Pressable
-              style={styles.deleteBtn}
-              onPress={() => setPendingDelete({ spotId, reviewId: review.id })}>
-              <Ionicons name="trash-outline" size={14} color={colors.logout} />
-              <Text style={styles.deleteText}>삭제</Text>
-            </Pressable>
+            <View style={styles.actions}>
+              <Pressable
+                style={styles.actionBtn}
+                onPress={() =>
+                  router.push({ pathname: '/review/[spotId]', params: { spotId, reviewId: review.id } })
+                }
+                accessibilityRole="button"
+                accessibilityLabel="후기 수정">
+                <Ionicons name="pencil-outline" size={14} color={colors.sage} />
+                <Text style={styles.editText}>수정</Text>
+              </Pressable>
+              <Pressable
+                style={styles.actionBtn}
+                onPress={() => setPendingDelete({ spotId, reviewId: review.id })}
+                accessibilityRole="button"
+                accessibilityLabel="후기 삭제">
+                <Ionicons name="trash-outline" size={14} color={colors.logout} />
+                <Text style={styles.deleteText}>삭제</Text>
+              </Pressable>
+            </View>
           </View>
-        ))}
-
-        {entries.length === 0 && (
+        )}
+        ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="create-outline" size={40} color={colors.sageLight} />
             <Text style={styles.emptyTitle}>아직 작성한 후기가 없어요</Text>
@@ -65,8 +82,8 @@ export default function MyReviewsScreen() {
               다녀온 힐링 스팟의 감상을 남기면{'\n'}다른 사람들의 쉼에도 도움이 돼요.
             </Text>
           </View>
-        )}
-      </ScrollView>
+        }
+      />
 
       <ConfirmDialog
         visible={pendingDelete !== null}
@@ -136,11 +153,20 @@ const styles = StyleSheet.create({
     borderRadius: radius.image,
     backgroundColor: colors.sageSoft,
   },
-  deleteBtn: {
+  actions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 16,
+  },
+  actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    alignSelf: 'flex-end',
+  },
+  editText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.sage,
   },
   deleteText: {
     fontSize: 13,

@@ -84,10 +84,6 @@ export default function SpotDetailScreen() {
               <Text style={styles.reviewTitle}>방문자 후기</Text>
               <Text style={styles.reviewCount}>{reviews.length}</Text>
             </View>
-            <View style={styles.reviewTitleRow}>
-              <Text style={styles.sectionLink}>전체보기</Text>
-              <Ionicons name="chevron-forward" size={14} color={colors.textSub} />
-            </View>
           </View>
 
           <View style={styles.reviewList}>

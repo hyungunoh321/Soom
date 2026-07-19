@@ -20,7 +20,9 @@ export default function RootLayout() {
             <Stack.Screen name="onboarding" />
             <Stack.Screen name="auth/login" />
             <Stack.Screen name="auth/signup" />
+            <Stack.Screen name="auth/reset" />
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="search" />
             <Stack.Screen name="spot/[id]" />
             <Stack.Screen name="review/[spotId]" options={{ presentation: 'modal' }} />
             <Stack.Screen name="list/[listId]" />

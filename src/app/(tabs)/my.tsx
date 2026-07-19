@@ -1,20 +1,43 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useToast } from '@/components/Toast';
 import { colors, radius, shadow, spacing } from '@/constants/theme';
 import { getSpot } from '@/data/spots';
 import { useApp } from '@/store/app-context';
+import { persistPhoto } from '@/utils/photos';
 
 // SOOM_MY_001(내 정보) + SOOM_MY_002(내 후기)
 export default function MyScreen() {
   const router = useRouter();
-  const { user, bookmarks, myReviews, lists, logout } = useApp();
+  const toast = useToast();
+  const { user, bookmarks, myReviews, lists, logout, updateProfile } = useApp();
   const [confirmLogout, setConfirmLogout] = useState(false);
+
+  const changeAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      toast.show('사진 접근 권한이 필요해요.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      const uri = await persistPhoto(result.assets[0].uri);
+      updateProfile({ avatar: uri });
+      toast.show('프로필 사진을 바꿨어요.');
+    }
+  };
 
   const writtenReviews = Object.entries(myReviews).flatMap(([spotId, reviews]) =>
     reviews.map((r) => ({
@@ -39,12 +62,12 @@ export default function MyScreen() {
 
         {/* 프로필 */}
         <View style={styles.profile}>
-          <View>
+          <Pressable onPress={changeAvatar} accessibilityRole="button" accessibilityLabel="프로필 사진 변경">
             <Image source={{ uri: user?.avatar }} style={styles.avatar} contentFit="cover" />
             <View style={styles.cameraBadge}>
               <Ionicons name="camera" size={14} color="#FFFFFF" />
             </View>
-          </View>
+          </Pressable>
           <Text style={styles.name}>{user?.name}</Text>
           <Text style={styles.bio}>{user?.bio}</Text>
         </View>

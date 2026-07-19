@@ -1,7 +1,9 @@
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SettingsHeader } from '@/components/SettingsHeader';
+import { useToast } from '@/components/Toast';
 import { colors, radius, spacing } from '@/constants/theme';
 import { useApp, type NotificationSettings } from '@/store/app-context';
 
@@ -25,7 +27,20 @@ const ITEMS: { key: keyof NotificationSettings; title: string; desc: string }[] 
 
 // SOOM_SET_001 — 추천 스팟 및 댓글 알림 설정
 export default function NotificationSettingsScreen() {
+  const toast = useToast();
   const { notifications, setNotification } = useApp();
+
+  // 알림을 켤 때 OS 알림 권한을 실제로 요청한다 (웹은 미지원)
+  const toggle = async (key: keyof NotificationSettings, value: boolean) => {
+    if (value && Platform.OS !== 'web') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') {
+        toast.show('기기 설정에서 알림 권한을 허용해 주세요.');
+        return;
+      }
+    }
+    setNotification(key, value);
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -39,7 +54,7 @@ export default function NotificationSettingsScreen() {
             </View>
             <Switch
               value={notifications[item.key]}
-              onValueChange={(v) => setNotification(item.key, v)}
+              onValueChange={(v) => toggle(item.key, v)}
               trackColor={{ false: colors.border, true: colors.sageLight }}
               thumbColor={notifications[item.key] ? colors.sage : '#FFFFFF'}
             />

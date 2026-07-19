@@ -21,21 +21,24 @@ import { useToast } from '@/components/Toast';
 import { colors, radius, spacing } from '@/constants/theme';
 import { MOOD_TAGS, getSpot } from '@/data/spots';
 import { useApp } from '@/store/app-context';
+import { persistPhoto } from '@/utils/photos';
 
 const MAX_PHOTOS = 5;
 
-// SOOM_SPOT_003 — 사진 업로드 및 후기 텍스트 작성
+// SOOM_SPOT_003 — 사진 업로드 및 후기 텍스트 작성 (reviewId가 있으면 수정 모드)
 export default function ReviewWriteScreen() {
-  const { spotId } = useLocalSearchParams<{ spotId: string }>();
+  const { spotId, reviewId } = useLocalSearchParams<{ spotId: string; reviewId?: string }>();
   const router = useRouter();
   const toast = useToast();
-  const { user, addReview } = useApp();
+  const { user, myReviews, addReview, updateReview } = useApp();
   const spot = getSpot(spotId);
 
-  const [photos, setPhotos] = useState<string[]>([]);
-  const [rating, setRating] = useState(0);
+  const editing = (myReviews[spotId] ?? []).find((r) => r.id === reviewId);
+
+  const [photos, setPhotos] = useState<string[]>(editing?.photos ?? []);
+  const [rating, setRating] = useState(editing?.rating ?? 0);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [text, setText] = useState('');
+  const [text, setText] = useState(editing?.text ?? '');
 
   if (!spot) {
     return (
@@ -62,7 +65,8 @@ export default function ReviewWriteScreen() {
       quality: 0.7,
     });
     if (!result.canceled) {
-      const uris = result.assets.map((a) => a.uri);
+      // 임시 캐시 URI를 문서 폴더로 복사해 후기 저장 후에도 사진이 유지되게 한다
+      const uris = await Promise.all(result.assets.map((a) => persistPhoto(a.uri)));
       setPhotos((prev) => [...prev, ...uris].slice(0, MAX_PHOTOS));
     }
   };
@@ -79,23 +83,34 @@ export default function ReviewWriteScreen() {
 
   const canSubmit = rating > 0 && text.trim().length > 0;
 
+  // 딥링크로 바로 들어온 경우 back 히스토리가 없을 수 있다
+  const goBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace(`/spot/${spotId}`);
+  };
+
   const submit = () => {
     if (!canSubmit) {
       toast.show('별점과 후기 내용을 입력해 주세요.');
       return;
     }
-    const now = new Date();
-    addReview(spot.id, {
-      id: `my-${Date.now()}`,
-      author: user?.name ?? '익명',
-      avatar: user?.avatar,
-      date: `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}`,
-      rating,
-      text: text.trim(),
-      photos,
-    });
-    toast.show('후기가 등록되었어요.');
-    router.back();
+    if (editing) {
+      updateReview(spot.id, editing.id, { rating, text: text.trim(), photos });
+      toast.show('후기를 수정했어요.');
+    } else {
+      const now = new Date();
+      addReview(spot.id, {
+        id: `my-${Date.now()}`,
+        author: user?.name ?? '익명',
+        avatar: user?.avatar,
+        date: `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}`,
+        rating,
+        text: text.trim(),
+        photos,
+      });
+      toast.show('후기가 등록되었어요.');
+    }
+    goBack();
   };
 
   return (
@@ -105,7 +120,7 @@ export default function ReviewWriteScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {/* 헤더 */}
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} hitSlop={8} accessibilityRole="button">
+          <Pressable onPress={goBack} hitSlop={8} accessibilityRole="button">
             <Ionicons name="chevron-back" size={24} color={colors.textMain} />
           </Pressable>
           <Text style={styles.headerTitle} numberOfLines={1}>
@@ -180,7 +195,7 @@ export default function ReviewWriteScreen() {
             style={[styles.submitBtn, !canSubmit && styles.submitBtnDisabled]}
             onPress={submit}
             accessibilityRole="button">
-            <Text style={styles.submitText}>등록하기</Text>
+            <Text style={styles.submitText}>{editing ? '수정하기' : '등록하기'}</Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>
