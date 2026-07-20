@@ -85,4 +85,13 @@ describe('recommendSpots', () => {
       expect(Object.keys(spot.congestionByTime)).toEqual(['오전', '오후', '저녁', '심야']);
     }
   });
+
+  it('모든 스팟에는 서울 범위의 실제 지도 좌표가 있다', () => {
+    for (const spot of SPOTS) {
+      expect(spot.coords.latitude).toBeGreaterThan(37.4);
+      expect(spot.coords.latitude).toBeLessThan(37.7);
+      expect(spot.coords.longitude).toBeGreaterThan(126.7);
+      expect(spot.coords.longitude).toBeLessThan(127.2);
+    }
+  });
 });

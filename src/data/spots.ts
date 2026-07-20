@@ -20,6 +20,7 @@ export const SPOTS: Spot[] = [
     description:
       '여의도 한강공원 서쪽 끝, 해질녘이면 강물 위로 노을이 길게 내려앉는 벤치. 사람이 적어 혼자 생각을 정리하기 좋다.',
     congestionByTime: { 오전: 0.2, 오후: 0.45, 저녁: 0.6, 심야: 0.25 },
+    coords: { latitude: 37.5271, longitude: 126.9139 },
     mapPos: { x: 42, y: 30 },
     reviews: [
       {
@@ -70,6 +71,7 @@ export const SPOTS: Spot[] = [
     description:
       '연남동 골목 안쪽, 나무 책장으로 가득한 작은 독립서점. 잔잔한 음악과 책 냄새 속에서 시간을 잊게 된다.',
     congestionByTime: { 오전: 0.25, 오후: 0.5, 저녁: 0.4, 심야: 0.1 },
+    coords: { latitude: 37.5623, longitude: 126.9256 },
     mapPos: { x: 25, y: 48 },
     reviews: [
       {
@@ -107,6 +109,7 @@ export const SPOTS: Spot[] = [
     description:
       '망원 한강공원 북단, 가로등 불빛이 강물에 비치는 산책로 끝의 벤치. 밤이 되면 다리 야경이 한눈에 들어온다.',
     congestionByTime: { 오전: 0.15, 오후: 0.35, 저녁: 0.7, 심야: 0.4 },
+    coords: { latitude: 37.556, longitude: 126.8955 },
     mapPos: { x: 18, y: 26 },
     reviews: [
       {
@@ -146,6 +149,7 @@ export const SPOTS: Spot[] = [
     description:
       '통유리 너머 작은 정원이 보이는 티하우스. 식물에 둘러싸여 따뜻한 차 한 잔으로 쉬어가기 좋다.',
     congestionByTime: { 오전: 0.3, 오후: 0.75, 저녁: 0.55, 심야: 0.05 },
+    coords: { latitude: 37.5606, longitude: 126.9107 },
     mapPos: { x: 62, y: 55 },
     reviews: [
       {
@@ -181,6 +185,7 @@ export const SPOTS: Spot[] = [
     description:
       '옛 철길을 따라 이어지는 긴 숲길. 나무 그늘 아래를 걷다 보면 도심 소음이 멀어진다.',
     congestionByTime: { 오전: 0.35, 오후: 0.55, 저녁: 0.65, 심야: 0.2 },
+    coords: { latitude: 37.5602, longitude: 126.925 },
     mapPos: { x: 35, y: 62 },
     reviews: [
       {
@@ -209,6 +214,7 @@ export const SPOTS: Spot[] = [
     description:
       '건물 옥상에 조성된 작은 정원. 해질 무렵 도시의 지붕들 위로 번지는 노을을 볼 수 있다.',
     congestionByTime: { 오전: 0.1, 오후: 0.3, 저녁: 0.6, 심야: 0.35 },
+    coords: { latitude: 37.5535, longitude: 126.9188 },
     mapPos: { x: 72, y: 38 },
     reviews: [
       {

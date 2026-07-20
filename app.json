@@ -7,7 +7,12 @@
     "icon": "./assets/images/icon.png",
     "scheme": "soom",
     "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.hyungunoh.soom",
+      "supportsTablet": false
+    },
     "android": {
+      "package": "com.hyungunoh.soom",
       "adaptiveIcon": {
         "backgroundColor": "#8DA284",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
