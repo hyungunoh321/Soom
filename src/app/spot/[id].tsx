@@ -14,6 +14,7 @@ import { TagChip } from '@/components/TagChip';
 import { useToast } from '@/components/Toast';
 import { radius, shadow, spacing, type ThemeColors } from '@/constants/theme';
 import { getSpot, resolveCongestion } from '@/data/spots';
+import { useSpotReviews } from '@/hooks/use-spot-reviews';
 import { useThemeColors, useThemedStyles } from '@/hooks/use-theme';
 import { useApp } from '@/store/app-context';
 import type { CongestionLevel, Review } from '@/types';
@@ -27,6 +28,7 @@ export default function SpotDetailScreen() {
   const insets = useSafeAreaInsets();
   const toast = useToast();
   const {
+    userId,
     isBookmarked,
     toggleBookmark,
     myReviews,
@@ -40,6 +42,9 @@ export default function SpotDetailScreen() {
   const [pendingReport, setPendingReport] = useState<Review | null>(null);
 
   const spot = getSpot(id);
+  // 서버에 쌓인 다른 사용자들의 후기 (미연결 시 빈 배열)
+  const { reviews: serverReviews } = useSpotReviews(spot?.id);
+
   if (!spot) {
     return (
       <SafeAreaView style={styles.safe}>
@@ -51,8 +56,9 @@ export default function SpotDetailScreen() {
   const bookmarked = isBookmarked(spot.id);
   const mine = myReviews[spot.id] ?? [];
   const myIds = new Set(mine.map((r) => r.id));
-  // 내 후기 먼저, 신고한 후기는 숨김
-  const reviews: Review[] = [...mine, ...spot.reviews].filter(
+  // 내 후기(로컬 최신) → 다른 사용자 서버 후기 → 시드 후기 순, 신고한 후기는 숨김
+  const others = serverReviews.filter((r) => !myIds.has(r.id) && r.userId !== userId);
+  const reviews: Review[] = [...mine, ...others, ...spot.reviews].filter(
     (r) => !isReviewReported(spot.id, r.id),
   );
 

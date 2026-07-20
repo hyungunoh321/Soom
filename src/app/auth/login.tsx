@@ -18,32 +18,34 @@ import { radius, shadow, spacing, type ThemeColors } from '@/constants/theme';
 import { useThemeColors, useThemedStyles } from '@/hooks/use-theme';
 import { useApp } from '@/store/app-context';
 
-// SOOM_AUTH_001 — 이메일 로그인 (데모: 서버 없이 형식 검증만)
+// SOOM_AUTH_001 — 이메일 로그인 (Supabase Auth)
 export default function LoginScreen() {
   const router = useRouter();
   const toast = useToast();
-  const { hydrated, user, login } = useApp();
+  const { hydrated, user, signIn } = useApp();
   const c = useThemeColors();
   const styles = useThemedStyles(createStyles);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
 
   if (!hydrated) return null;
   if (user) return <Redirect href="/(tabs)" />;
 
-  const canSubmit = /\S+@\S+\.\S+/.test(email) && password.length >= 4;
+  const canSubmit = /\S+@\S+\.\S+/.test(email) && password.length >= 6 && !busy;
 
-  const submit = () => {
+  const submit = async () => {
     if (!canSubmit) {
-      toast.show('이메일 형식과 비밀번호(4자 이상)를 확인해 주세요.');
+      toast.show('이메일 형식과 비밀번호(6자 이상)를 확인해 주세요.');
       return;
     }
-    login({
-      name: email.split('@')[0],
-      email,
-      bio: '조용한 산책을 좋아해요',
-      avatar: 'https://i.pravatar.cc/200?img=44',
-    });
+    setBusy(true);
+    const error = await signIn(email, password);
+    setBusy(false);
+    if (error) {
+      toast.show(error);
+      return;
+    }
     router.replace('/(tabs)');
   };
 
@@ -90,7 +92,7 @@ export default function LoginScreen() {
             <Pressable
               style={[styles.submitBtn, !canSubmit && styles.submitBtnDisabled]}
               onPress={submit}>
-              <Text style={styles.submitText}>로그인</Text>
+              <Text style={styles.submitText}>{busy ? '로그인 중...' : '로그인'}</Text>
             </Pressable>
 
             <Pressable onPress={() => router.push('/auth/reset')}>

@@ -4,18 +4,35 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useToast } from '@/components/Toast';
 import { radius, shadow, spacing, type ThemeColors } from '@/constants/theme';
 import { useThemeColors, useThemedStyles } from '@/hooks/use-theme';
+import { useApp } from '@/store/app-context';
 
-// SOOM_AUTH_003 — 이메일 인증 후 비밀번호 재설정 (데모: 발송 완료 화면까지)
+// SOOM_AUTH_003 — 이메일로 비밀번호 재설정 링크 발송 (Supabase Auth)
 export default function ResetPasswordScreen() {
   const router = useRouter();
+  const toast = useToast();
+  const { resetPassword } = useApp();
   const c = useThemeColors();
   const styles = useThemedStyles(createStyles);
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  const canSubmit = /\S+@\S+\.\S+/.test(email);
+  const canSubmit = /\S+@\S+\.\S+/.test(email) && !busy;
+
+  const submit = async () => {
+    if (!canSubmit) return;
+    setBusy(true);
+    const error = await resetPassword(email);
+    setBusy(false);
+    if (error) {
+      toast.show(error);
+      return;
+    }
+    setSent(true);
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -61,8 +78,8 @@ export default function ResetPasswordScreen() {
 
           <Pressable
             style={[styles.submitBtn, !canSubmit && styles.submitBtnDisabled]}
-            onPress={() => canSubmit && setSent(true)}>
-            <Text style={styles.submitText}>재설정 링크 보내기</Text>
+            onPress={submit}>
+            <Text style={styles.submitText}>{busy ? '보내는 중...' : '재설정 링크 보내기'}</Text>
           </Pressable>
         </View>
       )}

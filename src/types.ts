@@ -19,7 +19,16 @@ export interface Review {
   text: string;
   photos: string[]; // 이미지 URL
   tags?: string[]; // 분위기 태그
-  likes?: number; // 기본 '도움돼요' 수 (내 좋아요는 별도 저장)
+  likes?: number; // '도움돼요' 수 (내 좋아요 제외)
+  userId?: string; // 서버 후기의 작성자 id (시드 후기는 없음)
+}
+
+// 나만의 힐링 코스 리스트
+export interface HealingList {
+  id: string;
+  name: string;
+  spotIds: string[];
+  createdAt: number;
 }
 
 export interface Spot {

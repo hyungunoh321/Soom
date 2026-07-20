@@ -13,13 +13,13 @@ import { radius, shadow, spacing, type ThemeColors } from '@/constants/theme';
 import { getSpot } from '@/data/spots';
 import { useThemeColors, useThemedStyles } from '@/hooks/use-theme';
 import { useApp } from '@/store/app-context';
-import { persistPhoto } from '@/utils/photos';
+import { uploadPhoto } from '@/utils/photos';
 
 // SOOM_MY_001(내 정보) + SOOM_MY_002(내 후기)
 export default function MyScreen() {
   const router = useRouter();
   const toast = useToast();
-  const { user, bookmarks, myReviews, lists, logout, updateProfile } = useApp();
+  const { user, userId, bookmarks, myReviews, lists, logout, updateProfile } = useApp();
   const c = useThemeColors();
   const styles = useThemedStyles(createStyles);
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -37,7 +37,8 @@ export default function MyScreen() {
       quality: 0.8,
     });
     if (!result.canceled && result.assets[0]) {
-      const uri = await persistPhoto(result.assets[0].uri);
+      // 스토리지에 올려 다른 사용자 후기 카드에서도 보이게 한다
+      const uri = await uploadPhoto(result.assets[0].uri, userId ?? 'anonymous', 'avatars');
       updateProfile({ avatar: uri });
       toast.show('프로필 사진을 바꿨어요.');
     }

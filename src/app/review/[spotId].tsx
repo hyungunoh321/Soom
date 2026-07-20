@@ -21,8 +21,9 @@ import { useToast } from '@/components/Toast';
 import { radius, spacing, type ThemeColors } from '@/constants/theme';
 import { MOOD_TAGS, getSpot } from '@/data/spots';
 import { useThemeColors, useThemedStyles } from '@/hooks/use-theme';
+import { uuid } from '@/lib/api';
 import { useApp } from '@/store/app-context';
-import { persistPhoto } from '@/utils/photos';
+import { persistPhoto, uploadPhoto } from '@/utils/photos';
 
 const MAX_PHOTOS = 5;
 
@@ -31,7 +32,8 @@ export default function ReviewWriteScreen() {
   const { spotId, reviewId } = useLocalSearchParams<{ spotId: string; reviewId?: string }>();
   const router = useRouter();
   const toast = useToast();
-  const { user, myReviews, addReview, updateReview } = useApp();
+  const { user, userId, myReviews, addReview, updateReview } = useApp();
+  const [submitting, setSubmitting] = useState(false);
   const c = useThemeColors();
   const styles = useThemedStyles(createStyles);
   const spot = getSpot(spotId);
@@ -84,7 +86,7 @@ export default function ReviewWriteScreen() {
     );
   };
 
-  const canSubmit = rating > 0 && text.trim().length > 0;
+  const canSubmit = rating > 0 && text.trim().length > 0 && !submitting;
 
   // 딥링크로 바로 들어온 경우 back 히스토리가 없을 수 있다
   const goBack = () => {
@@ -92,30 +94,36 @@ export default function ReviewWriteScreen() {
     else router.replace(`/spot/${spotId}`);
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (!canSubmit) {
       toast.show('별점과 후기 내용을 입력해 주세요.');
       return;
     }
+    setSubmitting(true);
+    // 로컬 URI 사진은 스토리지에 올려 공개 URL로 교체 (실패 시 로컬 보존 URI 유지)
+    const uploaded = await Promise.all(photos.map((p) => uploadPhoto(p, userId ?? 'anonymous')));
+    setSubmitting(false);
+
     if (editing) {
       updateReview(spot.id, editing.id, {
         rating,
         text: text.trim(),
-        photos,
+        photos: uploaded,
         tags: selectedTags,
       });
       toast.show('후기를 수정했어요.');
     } else {
       const now = new Date();
       addReview(spot.id, {
-        id: `my-${Date.now()}`,
+        id: uuid(), // 서버와 같은 id를 쓰도록 클라이언트에서 생성
         author: user?.name ?? '익명',
         avatar: user?.avatar,
         date: `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}`,
         rating,
         text: text.trim(),
-        photos,
+        photos: uploaded,
         tags: selectedTags,
+        userId: userId ?? undefined,
       });
       toast.show('후기가 등록되었어요.');
     }
@@ -204,7 +212,9 @@ export default function ReviewWriteScreen() {
             style={[styles.submitBtn, !canSubmit && styles.submitBtnDisabled]}
             onPress={submit}
             accessibilityRole="button">
-            <Text style={styles.submitText}>{editing ? '수정하기' : '등록하기'}</Text>
+            <Text style={styles.submitText}>
+              {submitting ? '올리는 중...' : editing ? '수정하기' : '등록하기'}
+            </Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>

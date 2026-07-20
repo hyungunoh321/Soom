@@ -18,31 +18,38 @@ import { radius, shadow, spacing, type ThemeColors } from '@/constants/theme';
 import { useThemeColors, useThemedStyles } from '@/hooks/use-theme';
 import { useApp } from '@/store/app-context';
 
-// SOOM_AUTH_002 — 회원가입 (데모: 서버 없이 형식 검증만)
+// SOOM_AUTH_002 — 회원가입 (Supabase Auth)
 export default function SignupScreen() {
   const router = useRouter();
   const toast = useToast();
-  const { login } = useApp();
+  const { signUp } = useApp();
   const c = useThemeColors();
   const styles = useThemedStyles(createStyles);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
 
   const canSubmit =
-    name.trim().length >= 2 && /\S+@\S+\.\S+/.test(email) && password.length >= 4;
+    name.trim().length >= 2 && /\S+@\S+\.\S+/.test(email) && password.length >= 6 && !busy;
 
-  const submit = () => {
+  const submit = async () => {
     if (!canSubmit) {
-      toast.show('닉네임(2자 이상)·이메일·비밀번호(4자 이상)를 확인해 주세요.');
+      toast.show('닉네임(2자 이상)·이메일·비밀번호(6자 이상)를 확인해 주세요.');
       return;
     }
-    login({
-      name: name.trim(),
-      email,
-      bio: '조용한 산책을 좋아해요',
-      avatar: 'https://i.pravatar.cc/200?img=44',
-    });
+    setBusy(true);
+    const { error, needsEmailConfirm } = await signUp(name.trim(), email, password);
+    setBusy(false);
+    if (error) {
+      toast.show(error);
+      return;
+    }
+    if (needsEmailConfirm) {
+      toast.show('인증 메일을 보냈어요. 메일 확인 후 로그인해 주세요.');
+      router.replace('/auth/login');
+      return;
+    }
     router.replace('/(tabs)');
   };
 
@@ -90,7 +97,7 @@ export default function SignupScreen() {
               <Ionicons name="lock-closed-outline" size={18} color={c.textSub} />
               <TextInput
                 style={styles.input}
-                placeholder="비밀번호 (4자 이상)"
+                placeholder="비밀번호 (6자 이상)"
                 placeholderTextColor={c.textSub}
                 value={password}
                 onChangeText={setPassword}
@@ -101,7 +108,7 @@ export default function SignupScreen() {
             <Pressable
               style={[styles.submitBtn, !canSubmit && styles.submitBtnDisabled]}
               onPress={submit}>
-              <Text style={styles.submitText}>가입하고 시작하기</Text>
+              <Text style={styles.submitText}>{busy ? '가입 중...' : '가입하고 시작하기'}</Text>
             </Pressable>
           </View>
         </ScrollView>

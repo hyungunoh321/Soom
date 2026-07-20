@@ -36,7 +36,8 @@ const PRESET_AREAS = [
 // SOOM_HOME_001(추천 스팟) + SOOM_HOME_002(맞춤 추천)
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, bookmarks, myReviews, locationOverride, setLocationOverride } = useApp();
+  const { user, bookmarks, myReviews, locationOverride, setLocationOverride, refreshCongestion } =
+    useApp();
   const { label: gpsLabel, refresh: refreshLocation } = useLocationLabel();
   const c = useThemeColors();
   const styles = useThemedStyles(createStyles);
@@ -62,9 +63,9 @@ export default function HomeScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refreshLocation();
+    await Promise.all([refreshLocation(), refreshCongestion()]);
     setRefreshing(false);
-  }, [refreshLocation]);
+  }, [refreshLocation, refreshCongestion]);
 
   const header = (
     <View style={styles.headerWrap}>
